@@ -1,27 +1,26 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Green Taxi Domažlice - Uzávěrky v5.5</title>
+    <title>Green Taxi Domažlice - Uzávěrky v5.6</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --primary-color: #2e7d32; /* Sytější, prémiová zelená */
+            --primary-color: #2e7d32; 
             --primary-light: #e8f5e9;
             --secondary-color: #4f5b66;
             --danger-color: #c62828;
-            --bg-color: #f1f5f9; /* Moderní světle šedé pozadí */
+            --bg-color: #f1f5f9; 
             --card-bg: #ffffff;
             --text-dark: #1e293b;
             --text-muted: #64748b;
             --border-light: #e2e8f0;
         }
 
-        /* Globální styly optimalizované pro mobil */
         * {
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; /* Odstraní modré bliknutí při kliknutí na mobilu */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         body { 
@@ -69,7 +68,6 @@
             to { opacity: 1; transform: translateY(0); } 
         }
         
-        /* Formulářové prvky skvělé pro prsty */
         input, select { 
             display: block; 
             margin: 10px 0 18px 0; 
@@ -82,7 +80,7 @@
             transition: all 0.2s ease; 
             background-color: #f8fafc;
             color: var(--text-dark);
-            -webkit-appearance: none; /* Odstraní nativní iOS styly */
+            -webkit-appearance: none; 
         }
         input:focus, select:focus { 
             border-color: var(--primary-color); 
@@ -98,7 +96,6 @@
             font-size: 14px; 
         }
         
-        /* Velká a snadno stisknutelná tlačítka */
         button { 
             background: var(--primary-color); 
             color: white; 
@@ -124,10 +121,6 @@
             background: var(--secondary-color); 
             margin-top: 8px; 
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
-        }
-        .danger-btn { 
-            background: var(--danger-color); 
-            box-shadow: 0 4px 6px -1px rgba(198, 40, 40, 0.2); 
         }
         
         .nav-buttons { 
@@ -159,7 +152,6 @@
             border: 1px solid #c8e6c9; 
         }
         
-        /* Kompaktní a čitelné tabulky s posuvem na mobilu */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -196,7 +188,6 @@
         .minus { color: var(--danger-color); font-weight: 600; }
         .plus { color: var(--primary-color); font-weight: 600; }
         
-        /* Rekapitulace peněz */
         .final-box { 
             background: var(--primary-color); 
             color: white; 
@@ -213,7 +204,6 @@
             text-shadow: 0 1px 3px rgba(0,0,0,0.15); 
         }
         
-        /* Mřížka vozidel upravená pro mobily */
         .fleet-grid { 
             display: grid; 
             grid-template-columns: repeat(2, 1fr); 
@@ -221,9 +211,7 @@
             margin-top: 15px; 
         }
         @media (max-width: 360px) {
-            .fleet-grid {
-                grid-template-columns: 1fr;
-            }
+            .fleet-grid { grid-template-columns: 1fr; }
         }
         .car-card { 
             border: 2px solid var(--border-light); 
@@ -245,7 +233,6 @@
             transform: scale(0.97); 
         }
         
-        /* SPZ jako opravdová značka */
         .spz-tag { 
             background: #f8fafc; 
             border: 2px solid #1e293b; 
@@ -271,7 +258,6 @@
             border-radius: 1px; 
         }
 
-        /* Celoplošné překrytí pro podpis na mobilu */
         #signOverlay { 
             display: none; 
             position: fixed; 
@@ -313,7 +299,6 @@
             font-weight: bold;
         }
 
-        /* Sekce filtrů pro admina v mřížce */
         .filter-container {
             display: grid;
             grid-template-columns: 1fr;
@@ -325,12 +310,8 @@
             border: 1px solid var(--border-light);
         }
         @media (min-width: 480px) {
-            .filter-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .admin-actions {
-                grid-template-columns: repeat(3, 1fr);
-            }
+            .filter-container { grid-template-columns: repeat(2, 1fr); }
+            .admin-actions { grid-template-columns: repeat(3, 1fr); }
         }
         .filter-container select, .filter-container input {
             margin: 3px 0 0 0;
@@ -463,19 +444,19 @@
         <div class="filter-container">
             <div>
                 <span class="filter-label">Vozidlo</span>
-                <select id="carFilter" onchange="vykreslitDatabazi()"></select>
+                <select id="carFilter" onchange="vykreslitDatabaziPoOvereni()"></select>
             </div>
             <div>
                 <span class="filter-label">Řidič</span>
-                <select id="driverFilter" onchange="vykreslitDatabazi()"></select>
+                <select id="driverFilter" onchange="vykreslitDatabaziPoOvereni()"></select>
             </div>
             <div>
                 <span class="filter-label">Datum od</span>
-                <input type="date" id="dateFromFilter" onchange="vykreslitDatabazi()">
+                <input type="date" id="dateFromFilter" onchange="vykreslitDatabaziPoOvereni()">
             </div>
             <div>
                 <span class="filter-label">Datum do</span>
-                <input type="date" id="dateToFilter" onchange="vykreslitDatabazi()">
+                <input type="date" id="dateToFilter" onchange="vykreslitDatabaziPoOvereni()">
             </div>
         </div>
         
@@ -567,15 +548,20 @@
 </div>
 
 <script>
-    // Inicializace Supabase s tvými údaji
+    // Správná inicializace Supabase klienta pro webové prohlížeče
     const SUPABASE_URL = "https://nWrlsvBKp3SrrvG9v1Rrig.supabase.co";
     const SUPABASE_KEY = "sb_publishable_nWrlsvBKp3SrrvG9v1Rrig_mETsc-eC";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Použití globálního objektu window.supabase
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const ADMIN_HESLO = "26 3654";
     const SAZBA = 9;
 
-    let ridici = JSON.parse(localStorage.getItem('taxi_ridici')) || { "admin": "1234" };
+    // Automatická obnova základních dat, pokud je paměť prázdná
+    if (!localStorage.getItem('taxi_ridici')) {
+        localStorage.setItem('taxi_ridici', JSON.stringify({ "admin": "1234" }));
+    }
     
     const defaultAuta = [
         { id: 1, nazev: "Octavia G1", spz: "4P5 1234", km: 0 },
@@ -590,9 +576,15 @@
         { id: 10, nazev: "Hyundai G10", spz: "5P6 7788", km: 0 }
     ];
 
-    let auta = JSON.parse(localStorage.getItem('taxi_auta_v3')) || defaultAuta;
+    if (!localStorage.getItem('taxi_auta_v3')) {
+        localStorage.setItem('taxi_auta_v3', JSON.stringify(defaultAuta));
+    }
+
+    let ridici = JSON.parse(localStorage.getItem('taxi_ridici'));
+    let auta = JSON.parse(localStorage.getItem('taxi_auta_v3'));
     let prihlasenyUzivatel = localStorage.getItem('taxi_user') || "";
     let vybraneAuto = null;
+    let adminOveren = false; // Abychom se neptali na heslo pořád dokola
 
     window.onload = () => {
         if (prihlasenyUzivatel) { 
@@ -600,7 +592,9 @@
             document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
             vykreslitAuta(); 
         } 
-        else { prepnout('sec-login'); }
+        else { 
+            prepnout('sec-login'); 
+        }
         nactiFiltryVArchivu();
     };
 
@@ -609,7 +603,20 @@
         document.getElementById(id).classList.add('active');
         if(id === 'sec-edit-cars') vykreslitEditaciAut();
         if(id === 'sec-edit-drivers') nactiAdokresliRidice();
-        if(id === 'sec-database') { nactiFiltryVArchivu(); vykreslitDatabazi(); }
+        if(id === 'sec-database') { 
+            nactiFiltryVArchivu(); 
+            if(!adminOveren) {
+                if (prompt("Vstup pouze pro Administrátora. Zadejte heslo:") === ADMIN_HESLO) {
+                    adminOveren = true;
+                    vykreslitDatabaziPoOvereni();
+                } else {
+                    alert("Nesprávné heslo!");
+                    prepnout('sec-login');
+                }
+            } else {
+                vykreslitDatabaziPoOvereni();
+            }
+        }
         
         if(vybraneAuto) {
             document.querySelectorAll('.car-label').forEach(el => {
@@ -656,10 +663,15 @@
             prepnout('sec-fleet');
             document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
             vykreslitAuta();
-        } else alert("Neplatné přihlašovací údaje!");
+        } else {
+            alert("Neplatné přihlašovací údaje! Výchozí uživatel je admin s heslem 1234.");
+        }
     }
 
-    function odhlasit() { localStorage.removeItem('taxi_user'); location.reload(); }
+    function odhlasit() { 
+        localStorage.removeItem('taxi_user'); 
+        location.reload(); 
+    }
     
     function vstoupitAdmin() { 
         if (prompt("Zadejte heslo administrátora:") === ADMIN_HESLO) {
@@ -766,7 +778,6 @@
         document.getElementById('signOverlay').style.display = "block";
     }
 
-    // UKLÁDÁNÍ DO ONLINE DATABÁZE SUPABASE
     async function finalniPodpisOdeslani() {
         const pass = document.getElementById('signPass').value;
         if (ridici[prihlasenyUzivatel] !== pass) {
@@ -791,7 +802,6 @@
         const kOdevzdani = trzba - celkemVydaje;
         const env = document.getElementById('envelopeNum').value.trim();
 
-        // Objekt dat, který letí do Supabase
         const novaUzavreka = {
             ridic: prihlasenyUzivatel,
             auto: vybraneAuto.nazev,
@@ -808,8 +818,7 @@
             k_odevzdani: kOdevzdani
         };
 
-        // Zápis do Supabase
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('uzavierky')
             .insert([novaUzavreka]);
 
@@ -818,7 +827,6 @@
         } else {
             alert("Uzávěrka byla úspěšně uložena do centrální databáze!");
             
-            // Aktualizace stavu tachometru auta v lokální paměti
             vybraneAuto.km = end;
             localStorage.setItem('taxi_auta_v3', JSON.stringify(auta));
 
@@ -827,15 +835,8 @@
         }
     }
 
-    // NAČÍTÁNÍ Z ONLINE DATABÁZE SUPABASE PRO ADMINA
-    async function vykreslitDatabazi() {
-        if (prompt("Vstup pouze pro Administrátora. Zadejte heslo:") !== ADMIN_HESLO) {
-            alert("Nesprávné heslo!");
-            prepnout('sec-login');
-            return;
-        }
-
-        let { data: onlineDb, error } = await supabase
+    async function vykreslitDatabaziPoOvereni() {
+        let { data: onlineDb, error } = await supabaseClient
             .from('uzavierky')
             .select('*')
             .order('created_at', { ascending: false });
@@ -886,12 +887,16 @@
 
     function nactiFiltryVArchivu() {
         const carSel = document.getElementById('carFilter');
-        carSel.innerHTML = '<option value="">-- Všechna auta --</option>';
-        auta.forEach(a => carSel.innerHTML += `<option value="${a.nazev}">${a.nazev}</option>`);
+        if (carSel) {
+            carSel.innerHTML = '<option value="">-- Všechna auta --</option>';
+            auta.forEach(a => carSel.innerHTML += `<option value="${a.nazev}">${a.nazev}</option>`);
+        }
 
         const drvSel = document.getElementById('driverFilter');
-        drvSel.innerHTML = '<option value="">-- Všichni řidiči --</option>';
-        Object.keys(ridici).forEach(r => drvSel.innerHTML += `<option value="${r}">${r}</option>`);
+        if (drvSel) {
+            drvSel.innerHTML = '<option value="">-- Všichni řidiči --</option>';
+            Object.keys(ridici).forEach(r => drvSel.innerHTML += `<option value="${r}">${r}</option>`);
+        }
     }
 
     function vykreslitEditaciAut() {
@@ -962,7 +967,7 @@
     }
 
     async function exportToCSV() {
-        let { data: onlineDb } = await supabase.from('uzavierky').select('*').order('created_at', { ascending: false });
+        let { data: onlineDb } = await supabaseClient.from('uzavierky').select('*').order('created_at', { ascending: false });
         if(!onlineDb || onlineDb.length === 0) { alert("Žádná data k exportu."); return; }
 
         let csv = "\uFEFFDatum a čas;Řidič;Vozidlo;Obálka;Km Start;Km Cíl;Odečet Km;Tržba;Palivo Litry;Palivo Cena;Km Pumpa;K odevzdání\n";
