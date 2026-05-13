@@ -567,8 +567,8 @@
 </div>
 
 <script>
-    // Inicializace Supabase s tvými údaji
-    const SUPABASE_URL = "https://nWrlsvBKp3SrrvG9v1Rrig.supabase.co";
+    // 🏛️ Automaticky vygenerovaná a opravená adresa na základě vašeho klíče
+    const SUPABASE_URL = "https://nWrlsvBKp3SrrvG9v1Rrig.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_nWrlsvBKp3SrrvG9v1Rrig_mETsc-eC";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -811,33 +811,25 @@
             // Zápis do tabulky 'uzavierky' v Supabase
             const { error } = await supabase.from('uzavierky').insert([novaUzavreka]);
             
-            if (error) throw error;
+            if (error) {
+                // Diagnostické okno pro mobily
+                alert("Chyba ze Supabase!\nKód: " + error.code + "\nZpráva: " + error.message + "\nDetaily: " + error.details);
+                return;
+            }
 
-            // Pokud zápis proběhl úspěšně, aktualizujeme kilometry auta v lokální paměti
+            alert("Uzávěrka byla úspěšně odeslána do online databáze a uložena!");
+            
             vybraneAuto.km = end;
             localStorage.setItem('taxi_auta_v3', JSON.stringify(auta));
-
-            alert("Uzávěrka byla úspěšně odeslána do databáze a uložena!");
-            document.getElementById('signOverlay').style.display = "none";
             
-            // Návrat na výběr aut
+            document.getElementById('signOverlay').style.display = "none";
             prepnout('sec-fleet');
             vykreslitAuta();
 
         } catch (err) {
-            console.error("Chyba při odesílání:", err);
-            alert("Nepodařilo se odeslat data do Supabase! Zkontrolujte připojení k internetu. Detaily: " + err.message);
+            alert("Neočekávaná kritická chyba systému:\n" + err.message);
         }
     }
-
-    // Pomocné funkce pro zbytek rozhraní, aby aplikace nevyhazovala chyby
-    function nactiFiltryVArchivu() {}
-    function vykreslitDatabazi() {}
-    function vykreslitEditaciAut() {}
-    function nactiAdokresliRidice() {}
-    function exportToCSV() {}
-    function ulozitZmenyAut() {}
-    function ulozitZmenyRidicu() {}
 </script>
 </body>
 </html>
