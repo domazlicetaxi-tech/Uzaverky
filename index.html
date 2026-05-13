@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Green Taxi Domažlice - Uzávěrky v5.6</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Green Taxi Domažlice - Uzávěrky v5.7</title>
     <style>
         :root {
             --primary-color: #2e7d32; 
@@ -548,17 +547,13 @@
 </div>
 
 <script>
-    // Správná inicializace Supabase klienta pro webové prohlížeče
-    const SUPABASE_URL = "https://nWrlsvBKp3SrrvG9v1Rrig.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_nWrlsvBKp3SrrvG9v1Rrig_mETsc-eC";
-    
-    // Použití globálního objektu window.supabase
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Přímé propojení přes standardní REST API (nevyžaduje žádné knihovny)
+    const REST_URL = "https://nWrlsvBKp3SrrvG9v1Rrig.supabase.co/rest/v1/uzavierky";
+    const API_KEY = "sb_publishable_nWrlsvBKp3SrrvG9v1Rrig_mETsc-eC";
 
     const ADMIN_HESLO = "26 3654";
     const SAZBA = 9;
 
-    // Automatická obnova základních dat, pokud je paměť prázdná
     if (!localStorage.getItem('taxi_ridici')) {
         localStorage.setItem('taxi_ridici', JSON.stringify({ "admin": "1234" }));
     }
@@ -584,7 +579,7 @@
     let auta = JSON.parse(localStorage.getItem('taxi_auta_v3'));
     let prihlasenyUzivatel = localStorage.getItem('taxi_user') || "";
     let vybraneAuto = null;
-    let adminOveren = false; // Abychom se neptali na heslo pořád dokola
+    let adminOveren = false;
 
     window.onload = () => {
         if (prihlasenyUzivatel) { 
@@ -721,7 +716,7 @@
                 return;
             }
             if (!zadalCenu || !zadalLitry) {
-                alert("Chyba: Pokud jste tankovali, musíte zadat jak cenu, tak i množství litrů!");
+                alert("Chyba: Pokud jste tankovali, muste zadat jak cenu, tak i množství litrů!");
                 return;
             }
         } else {
@@ -778,6 +773,7 @@
         document.getElementById('signOverlay').style.display = "block";
     }
 
+    // Bezpečné odesílání dat přes nativní fetch API
     async function finalniPodpisOdeslani() {
         const pass = document.getElementById('signPass').value;
         if (ridici[prihlasenyUzivatel] !== pass) {
@@ -818,13 +814,23 @@
             k_odevzdani: kOdevzdani
         };
 
-        const { error } = await supabaseClient
-            .from('uzavierky')
-            .insert([novaUzavreka]);
+        try {
+            const response = await fetch(REST_URL, {
+                method: "POST",
+                headers: {
+                    "apikey": API_KEY,
+                    "Authorization": "Bearer " + API_KEY,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                body: JSON.stringify(novaUzavreka)
+            });
 
-        if (error) {
-            alert("Chyba při odesílání do online databáze: " + error.message);
-        } else {
+            if (!response.ok) {
+                const errData = await response.text();
+                throw new Error(errData);
+            }
+
             alert("Uzávěrka byla úspěšně uložena do centrální databáze!");
             
             vybraneAuto.km = end;
@@ -832,57 +838,67 @@
 
             document.getElementById('signOverlay').style.display = 'none';
             location.reload();
+
+        } catch (error) {
+            alert("Chyba při odesílání do online databáze: " + error.message);
         }
     }
 
+    // Bezpečné načítání dat přes nativní fetch API
     async function vykreslitDatabaziPoOvereni() {
-        let { data: onlineDb, error } = await supabaseClient
-            .from('uzavierky')
-            .select('*')
-            .order('created_at', { ascending: false });
+        try {
+            const response = await fetch(REST_URL + "?order=created_at.desc", {
+                method: "GET",
+                headers: {
+                    "apikey": API_KEY,
+                    "Authorization": "Bearer " + API_KEY
+                }
+            });
 
-        if (error) {
+            if (!response.ok) throw new Error("Chyba stahování dat.");
+            
+            const onlineDb = await response.json();
+            const tbody = document.getElementById('dbBody');
+            tbody.innerHTML = "";
+
+            const selCar = document.getElementById('carFilter').value;
+            const selDriver = document.getElementById('driverFilter').value;
+            const dateFrom = document.getElementById('dateFromFilter').value;
+            const dateTo = document.getElementById('dateToFilter').value;
+
+            onlineDb.forEach(z => {
+                const zDate = new Date(z.created_at);
+                const zDateStr = zDate.toISOString().split('T')[0];
+
+                if(selCar && z.auto !== selCar) return;
+                if(selDriver && z.ridic !== selDriver) return;
+                if(dateFrom && zDateStr < dateFrom) return;
+                if(dateTo && zDateStr > dateTo) return;
+
+                const celkemVydaje = (z.fuel_cena || 0) + (z.vydaje_nazdrazaci || 0) + (z.vydaje_ostatni || 0);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="nowrap">${zDate.toLocaleString('cs-CZ')}</td>
+                        <td><strong>${z.ridic}</strong></td>
+                        <td>${z.auto}</td>
+                        <td><code>${z.obalka || '-'}</code></td>
+                        <td>${z.km_start}</td>
+                        <td>${z.km_cil}</td>
+                        <td class="minus">-${z.odecet_km}</td>
+                        <td class="plus">${z.trzba} Kč</td>
+                        <td>${z.fuel_litry} l</td>
+                        <td>${z.fuel_cena} Kč</td>
+                        <td>${z.fuel_km}</td>
+                        <td class="minus">-${celkemVydaje} Kč</td>
+                        <td style="font-weight:bold; background:#e8f5e9;">${z.k_odevzdani} Kč</td>
+                    </tr>
+                `;
+            });
+
+        } catch (error) {
             alert("Nelze načíst data z databáze: " + error.message);
-            return;
         }
-
-        const tbody = document.getElementById('dbBody');
-        tbody.innerHTML = "";
-
-        const selCar = document.getElementById('carFilter').value;
-        const selDriver = document.getElementById('driverFilter').value;
-        const dateFrom = document.getElementById('dateFromFilter').value;
-        const dateTo = document.getElementById('dateToFilter').value;
-
-        onlineDb.forEach(z => {
-            const zDate = new Date(z.created_at);
-            const zDateStr = zDate.toISOString().split('T')[0];
-
-            if(selCar && z.auto !== selCar) return;
-            if(selDriver && z.ridic !== selDriver) return;
-            if(dateFrom && zDateStr < dateFrom) return;
-            if(dateTo && zDateStr > dateTo) return;
-
-            const celkemVydaje = (z.fuel_cena || 0) + (z.vydaje_nazdrazaci || 0) + (z.vydaje_ostatni || 0);
-
-            tbody.innerHTML += `
-                <tr>
-                    <td class="nowrap">${zDate.toLocaleString('cs-CZ')}</td>
-                    <td><strong>${z.ridic}</strong></td>
-                    <td>${z.auto}</td>
-                    <td><code>${z.obalka || '-'}</code></td>
-                    <td>${z.km_start}</td>
-                    <td>${z.km_cil}</td>
-                    <td class="minus">-${z.odecet_km}</td>
-                    <td class="plus">${z.trzba} Kč</td>
-                    <td>${z.fuel_litry} l</td>
-                    <td>${z.fuel_cena} Kč</td>
-                    <td>${z.fuel_km}</td>
-                    <td class="minus">-${celkemVydaje} Kč</td>
-                    <td style="font-weight:bold; background:#e8f5e9;">${z.k_odevzdani} Kč</td>
-                </tr>
-            `;
-        });
     }
 
     function nactiFiltryVArchivu() {
@@ -967,21 +983,32 @@
     }
 
     async function exportToCSV() {
-        let { data: onlineDb } = await supabaseClient.from('uzavierky').select('*').order('created_at', { ascending: false });
-        if(!onlineDb || onlineDb.length === 0) { alert("Žádná data k exportu."); return; }
+        try {
+            const response = await fetch(REST_URL + "?order=created_at.desc", {
+                method: "GET",
+                headers: {
+                    "apikey": API_KEY,
+                    "Authorization": "Bearer " + API_KEY
+                }
+            });
+            const onlineDb = await response.json();
+            if(!onlineDb || onlineDb.length === 0) { alert("Žádná data k exportu."); return; }
 
-        let csv = "\uFEFFDatum a čas;Řidič;Vozidlo;Obálka;Km Start;Km Cíl;Odečet Km;Tržba;Palivo Litry;Palivo Cena;Km Pumpa;K odevzdání\n";
-        onlineDb.forEach(z => {
-            csv += `${new Date(z.created_at).toLocaleString('cs-CZ')};${z.ridic};${z.auto};${z.obalka || ''};${z.km_start};${z.km_cil};${z.odecet_km};${z.trzba};${z.fuel_litry};${z.fuel_cena};${z.fuel_km};${z.k_odevzdani}\n`;
-        });
+            let csv = "\uFEFFDatum a čas;Řidič;Vozidlo;Obálka;Km Start;Km Cíl;Odečet Km;Tržba;Palivo Litry;Palivo Cena;Km Pumpa;K odevzdání\n";
+            onlineDb.forEach(z => {
+                csv += `${new Date(z.created_at).toLocaleString('cs-CZ')};${z.ridic};${z.auto};${z.obalka || ''};${z.km_start};${z.km_cil};${z.odecet_km};${z.trzba};${z.fuel_litry};${z.fuel_cena};${z.fuel_km};${z.k_odevzdani}\n`;
+            });
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `uzavierky_green_taxi_${new Date().toLocaleDateString('cs-CZ')}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `uzavierky_green_taxi_${new Date().toLocaleDateString('cs-CZ')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (e) {
+            alert("Export selhal.");
+        }
     }
 </script>
 
