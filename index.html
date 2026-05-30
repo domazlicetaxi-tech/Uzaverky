@@ -462,7 +462,7 @@
                 grid-template-columns: repeat(2, 1fr);
             }
             .admin-actions {
-                grid-template-columns: repeat(5, 1fr);
+                grid-template-columns: repeat(3, 1fr);
             }
         }
         .filter-container select, .filter-container input {
@@ -640,6 +640,7 @@
             <button onclick="prepnout('sec-edit-cars')">🚗 SPRÁVA VOZIDEL</button>
             <button onclick="prepnout('sec-fleet-cards')" style="background-color: #fd7e14;">🗂️ KARTA VOZIDEL</button>
             <button onclick="prepnout('sec-edit-drivers')" style="background-color: #17a2b8;">👥 SPRÁVA ŘIDIČŮ</button>
+            <button onclick="prepnout('sec-login-logs')" style="background-color: #64748b;">📋 LOGY PŘIHLÁŠENÍ</button>
             <button style="background-color: #0284c7;" onclick="exportToCSV()">📥 CSV EXPORT</button>
             <button style="background-color: #6f42c1;" onclick="vyvolatImportCSV()">📥 IMPORT DAT</button>
         </div>
@@ -677,6 +678,23 @@
                     </tr>
                 </thead>
                 <tbody id="dbBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="sec-login-logs" class="box">
+        <h3>Historie přihlášení řidičů (Admin)</h3>
+        <button class="secondary-btn" onclick="prepnout('sec-database')" style="margin-bottom: 15px; padding: 12px; font-size: 15px;">⬅️ ZPĚT DO ARCHIVU</button>
+        <div class="table-responsive" style="max-height: 70vh;">
+            <table class="bill-table">
+                <thead>
+                    <tr class="section-title">
+                        <th style="min-width: 60px; text-align: center;">📍 Poloha</th>
+                        <th>Datum a čas přihlášení</th>
+                        <th>Jméno řidiče</th>
+                    </tr>
+                </thead>
+                <tbody id="loginLogsBody"></tbody>
             </table>
         </div>
     </div>
@@ -1004,6 +1022,7 @@
         }
         if(id === 'sec-database') { nactiFiltryVArchivu(); vykreslitDatabazi(); }
         if(id === 'sec-fleet-cards') vykreslitRozcestnikKaret();
+        if(id === 'sec-login-logs') nactiAvykresliLogy();
         
         if(vybraneAuto) {
             document.querySelectorAll('.car-label').forEach(el => {
@@ -1071,19 +1090,58 @@
         if (ridici[u] && ridici[u] === p) {
             prihlasenyUzivatel = u; 
             localStorage.setItem('taxi_user', u);
+            
+            // Okamžité přepnutí na fleet (aby řidič nemusel čekat na vyřešení GPS)
             prepnout('sec-fleet');
             document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
             vykreslitAuta();
             
+            // Asynchronní zjištění polohy (pokud nejde o admina) a uložení do DB logů
             if (u === "admin") {
+                db.collection("logy_prihlaseni").add({
+                    ridic: u,
+                    datum: new Date().toLocaleString("cs-CZ"),
+                    timestamp: Date.now(),
+                    gpsLat: null,
+                    gpsLng: null
+                }).catch(err => console.error("Chyba logování přihlášení: ", err));
+                
                 zkontrolovatBliziciSeSTK();
             } else {
-                // ZMĚNA: Po přihlášení běžného řidiče se vyžádá sdílení polohy, aby na to byl prohlížeč připraven
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
-                        (pos) => { console.log("Poloha udělena."); },
-                        (err) => { console.warn("Uživatel polohu zatím nepovolil nebo došlo k chybě.", err); }
+                        (pos) => { 
+                            // Poloha úspěšně získána
+                            db.collection("logy_prihlaseni").add({
+                                ridic: u,
+                                datum: new Date().toLocaleString("cs-CZ"),
+                                timestamp: Date.now(),
+                                gpsLat: pos.coords.latitude,
+                                gpsLng: pos.coords.longitude
+                            }).catch(err => console.error("Chyba logování přihlášení: ", err));
+                        },
+                        (err) => { 
+                            // Poloha zamítnuta nebo se nezdařila
+                            console.warn("Uživatel polohu zatím nepovolil nebo došlo k chybě.", err); 
+                            db.collection("logy_prihlaseni").add({
+                                ridic: u,
+                                datum: new Date().toLocaleString("cs-CZ"),
+                                timestamp: Date.now(),
+                                gpsLat: null,
+                                gpsLng: null
+                            }).catch(err => console.error("Chyba logování přihlášení: ", err));
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                     );
+                } else {
+                    // Zařízení nepodporuje geolokaci
+                    db.collection("logy_prihlaseni").add({
+                        ridic: u,
+                        datum: new Date().toLocaleString("cs-CZ"),
+                        timestamp: Date.now(),
+                        gpsLat: null,
+                        gpsLng: null
+                    }).catch(err => console.error("Chyba logování přihlášení: ", err));
                 }
             }
             
@@ -1269,7 +1327,6 @@
         document.getElementById('signOverlay').style.display = 'block';
     }
 
-    // ZMĚNA: Získání polohy a zajištění jejího vynucení před uložením do Firestore
     function finalniPodpisOdeslani(btnElement) {
         const pass = document.getElementById('signPass').value;
         if (ridici[prihlasenyUzivatel] === pass) {
@@ -1294,7 +1351,6 @@
                 });
             };
 
-            // Zjištění polohy, pokud to není administrátor odesílající uzávěrku
             if (navigator.geolocation && prihlasenyUzivatel !== 'admin') {
                 if(btnElement) {
                     btnElement.innerText = "ZÍSKÁVÁM POLOHU...";
@@ -1308,11 +1364,10 @@
                         ulozDoDatabaze();
                     },
                     (err) => {
-                        if (err.code === 1) { // 1 = PERMISSION_DENIED
+                        if (err.code === 1) { 
                             alert("CHYBA: Pro odeslání uzávěrky MUSÍTE v prohlížeči povolit sdílení polohy!");
                             if(btnElement) { btnElement.innerText = "POTVRDIT A ULOŽIT"; btnElement.disabled = false; }
                         } else {
-                            // Selhání (např. v budově není GPS signál), odešle se bez ní
                             alert("Nepodařilo se získat přesnou polohu (slabý signál). Uzávěrka bude odeslána bez lokace.");
                             docasneVypocty.gpsLat = null;
                             docasneVypocty.gpsLng = null;
@@ -1322,7 +1377,7 @@
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                ulozDoDatabaze(); // Pokud prohlížeč vůbec nepodporuje geolokaci nebo jde o admina
+                ulozDoDatabaze(); 
             }
 
         } else {
@@ -1461,7 +1516,6 @@
                 }
             } catch(e) { spotrebaText = "0.00 l"; }
 
-            // Tlačítko kontroly
             let statusBtn = '';
             if (zkontrolovano) {
                 statusBtn = `<button class="btn-status status-checked" title="Zkontrolováno">✔️</button>`;
@@ -1469,10 +1523,9 @@
                 statusBtn = `<button class="btn-status status-unchecked" onclick="zmenitStavKontroly('${d.docId}', false)" title="Nezkontrolováno - Kliknutím schválíte">❌</button>`;
             }
 
-            // ZMĚNA: Tlačítko pro Mapu (Poloha)
             let mapBtn = '';
             if (d.gpsLat && d.gpsLng) {
-                mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo odeslání na mapě" onclick="window.open('https://maps.google.com/?q=${d.gpsLat},${d.gpsLng}', '_blank')">📍</button>`;
+                mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo odeslání na mapě" onclick="window.open('https://maps.google.com/maps?q=${d.gpsLat},${d.gpsLng}', '_blank')">📍</button>`;
             } else {
                 mapBtn = `<button class="btn-status" style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; font-size:16px; cursor:not-allowed; opacity:0.6;" title="Poloha není k dispozici">📍</button>`;
             }
@@ -1905,6 +1958,41 @@
         });
     }
 
+    function nactiAvykresliLogy() {
+        const tbody = document.getElementById('loginLogsBody');
+        if (!tbody) return;
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px;">Načítám záznamy o přihlášení...</td></tr>`;
+        
+        db.collection("logy_prihlaseni").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+            tbody.innerHTML = "";
+            if (querySnapshot.empty) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px; color:var(--text-muted);">Žádné záznamy o přihlášení řidičů nebyly nalezeny.</td></tr>`;
+                return;
+            }
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                
+                let mapBtn = '';
+                if (data.gpsLat && data.gpsLng) {
+                    mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo přihlášení na mapě" onclick="window.open('https://maps.google.com/maps?q=${data.gpsLat},${data.gpsLng}', '_blank')">📍</button>`;
+                } else {
+                    mapBtn = `<button class="btn-status" style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; font-size:16px; cursor:not-allowed; opacity:0.6;" title="Poloha není k dispozici">📍</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align: center;">${mapBtn}</td>
+                        <td>${data.datum || "Neznámý čas"}</td>
+                        <td><strong>${data.ridic || "Neznámý řidič"}</strong></td>
+                    </tr>
+                `;
+            });
+        }).catch(err => {
+            console.error("Chyba při načítání logů: ", err);
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--danger-color); padding:15px;">Chyba při načítání dat: ${err}</td></tr>`;
+        });
+    }
+
     function exportToCSV() {
         const heslo = prompt("Pro stažení CSV exportu zadejte administrátorské heslo:");
         if (heslo === null) return;
@@ -1913,7 +2001,6 @@
         if(databaze.length === 0) { alert("Žádaná data k exportu!"); return; }
         
         let csvContent = "\uFEFF"; 
-        // Přidán sloupec pro polohu GPS i do exportu (volitelné)
         csvContent += "Stav;Datum a cas;Ridic;Vozidlo;SPZ;Obalka;GPS Poloha;Ujeto celkem (km);Km Start;Km Cil;Odecet km;Trzba (Kce);Litru;Cena Tankovani;Km Pumpa;Vydaje Nadrazaci;Vydaje Ostatni;Poznamka;K odevzdani (Kce)\r\n";
         
         const exportniSerazena = [...databaze].sort((a, b) => {
@@ -1993,7 +2080,6 @@
             let uspesnePridano = 0;
             let preskoceno = 0;
             
-            // Zjištění zda CSV obsahuje sloupec s GPS
             const hasGPSCol = lines[0].includes("GPS Poloha");
             const shiftIdx = hasGPSCol ? 1 : 0;
 
