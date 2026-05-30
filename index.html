@@ -685,6 +685,13 @@
     <div id="sec-login-logs" class="box">
         <h3>Historie přihlášení řidičů (Admin)</h3>
         <button class="secondary-btn" onclick="prepnout('sec-database')" style="margin-bottom: 15px; padding: 12px; font-size: 15px;">⬅️ ZPĚT DO ARCHIVU</button>
+        
+        <div class="filter-container" style="background: #fee2e2; border-color: #f87171; align-items: end;">
+            <div><span class="filter-label">Datum od</span><input type="date" id="logDateFrom" onchange="vykreslitLogy()"></div>
+            <div><span class="filter-label">Datum do</span><input type="date" id="logDateTo" onchange="vykreslitLogy()"></div>
+            <button class="danger-btn" onclick="smazatLogyPodleFiltru()" style="padding: 10px; font-size: 14px; margin-top: 15px; height: 44px;">🗑️ SMAZAT ZOBRAZENÉ OBDOBÍ</button>
+        </div>
+
         <div class="table-responsive" style="max-height: 70vh;">
             <table class="bill-table">
                 <thead>
@@ -692,6 +699,7 @@
                         <th style="min-width: 60px; text-align: center;">📍 Poloha</th>
                         <th>Datum a čas přihlášení</th>
                         <th>Jméno řidiče</th>
+                        <th style="text-align: center;">Akce</th>
                     </tr>
                 </thead>
                 <tbody id="loginLogsBody"></tbody>
@@ -932,6 +940,7 @@
 
     let ridici = { "admin": "1234" };
     let databaze = [];
+    let logyDatabaze = [];
     
     const defaultAuta = [
         { id: 1, nazev: "Octavia G1", spz: "4P5 1234", km: 0 },
@@ -1525,7 +1534,7 @@
 
             let mapBtn = '';
             if (d.gpsLat && d.gpsLng) {
-                mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo odeslání na mapě" onclick="window.open('https://maps.google.com/maps?q=${d.gpsLat},${d.gpsLng}', '_blank')">📍</button>`;
+                mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo odeslání na mapě" onclick="window.open('https://maps.google.com/?q=${d.gpsLat},${d.gpsLng}', '_blank')">📍</button>`;
             } else {
                 mapBtn = `<button class="btn-status" style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; font-size:16px; cursor:not-allowed; opacity:0.6;" title="Poloha není k dispozici">📍</button>`;
             }
@@ -1961,36 +1970,139 @@
     function nactiAvykresliLogy() {
         const tbody = document.getElementById('loginLogsBody');
         if (!tbody) return;
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px;">Načítám záznamy o přihlášení...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px;">Načítám záznamy o přihlášení...</td></tr>`;
         
         db.collection("logy_prihlaseni").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-            tbody.innerHTML = "";
-            if (querySnapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px; color:var(--text-muted);">Žádné záznamy o přihlášení řidičů nebyly nalezeny.</td></tr>`;
-                return;
-            }
+            logyDatabaze = [];
             querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                
-                let mapBtn = '';
-                if (data.gpsLat && data.gpsLng) {
-                    mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo přihlášení na mapě" onclick="window.open('https://maps.google.com/maps?q=${data.gpsLat},${data.gpsLng}', '_blank')">📍</button>`;
-                } else {
-                    mapBtn = `<button class="btn-status" style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; font-size:16px; cursor:not-allowed; opacity:0.6;" title="Poloha není k dispozici">📍</button>`;
-                }
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="text-align: center;">${mapBtn}</td>
-                        <td>${data.datum || "Neznámý čas"}</td>
-                        <td><strong>${data.ridic || "Neznámý řidič"}</strong></td>
-                    </tr>
-                `;
+                let data = doc.data();
+                data.docId = doc.id; 
+                logyDatabaze.push(data);
             });
+            vykreslitLogy();
         }).catch(err => {
             console.error("Chyba při načítání logů: ", err);
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--danger-color); padding:15px;">Chyba při načítání dat: ${err}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--danger-color); padding:15px;">Chyba při načítání dat: ${err}</td></tr>`;
         });
+    }
+
+    function vykreslitLogy() {
+        const tbody = document.getElementById('loginLogsBody');
+        const dateFrom = document.getElementById('logDateFrom').value;
+        const dateTo = document.getElementById('logDateTo').value;
+
+        tbody.innerHTML = "";
+
+        const filtrovaneLogy = logyDatabaze.filter(d => {
+            if (dateFrom || dateTo) {
+                const match = (d.datum || "").match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+                if (!match) return false;
+                
+                const logDate = new Date(match[3], match[2] - 1, match[1]);
+                
+                if (dateFrom) {
+                    const fromDate = new Date(dateFrom);
+                    fromDate.setHours(0, 0, 0, 0); 
+                    if (logDate < fromDate) return false;
+                }
+                if (dateTo) {
+                    const toDate = new Date(dateTo);
+                    toDate.setHours(23, 59, 59, 999); 
+                    if (logDate > toDate) return false;
+                }
+            }
+            return true;
+        });
+
+        if (filtrovaneLogy.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; color:var(--text-muted);">Žádné záznamy v tomto období.</td></tr>`;
+            return;
+        }
+
+        filtrovaneLogy.forEach((data) => {
+            let mapBtn = '';
+            if (data.gpsLat && data.gpsLng) {
+                mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo přihlášení na mapě" onclick="window.open('https://maps.google.com/?q=${data.gpsLat},${data.gpsLng}', '_blank')">📍</button>`;
+            } else {
+                mapBtn = `<button class="btn-status" style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; font-size:16px; cursor:not-allowed; opacity:0.6;" title="Poloha není k dispozici">📍</button>`;
+            }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="text-align: center;">${mapBtn}</td>
+                    <td>${data.datum || "Neznámý čas"}</td>
+                    <td><strong>${data.ridic || "Neznámý řidič"}</strong></td>
+                    <td style="text-align: center;">
+                        <button class="btn-delete" style="padding: 6px 12px;" onclick="smazatLog('${data.docId}')">SMAZAT</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function smazatLog(docId) {
+        if (confirm("Opravdu chcete smazat tento záznam o přihlášení?")) {
+            db.collection("logy_prihlaseni").doc(docId).delete().then(() => {
+                logyDatabaze = logyDatabaze.filter(l => l.docId !== docId);
+                vykreslitLogy();
+            }).catch(err => alert("Chyba při mazání záznamu: " + err));
+        }
+    }
+
+    async function smazatLogyPodleFiltru() {
+        const dateFrom = document.getElementById('logDateFrom').value;
+        const dateTo = document.getElementById('logDateTo').value;
+
+        const logyKeSmazani = logyDatabaze.filter(d => {
+            if (dateFrom || dateTo) {
+                const match = (d.datum || "").match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+                if (!match) return false;
+                const logDate = new Date(match[3], match[2] - 1, match[1]);
+                if (dateFrom) {
+                    const fromDate = new Date(dateFrom);
+                    fromDate.setHours(0, 0, 0, 0); 
+                    if (logDate < fromDate) return false;
+                }
+                if (dateTo) {
+                    const toDate = new Date(dateTo);
+                    toDate.setHours(23, 59, 59, 999); 
+                    if (logDate > toDate) return false;
+                }
+            }
+            return true;
+        });
+
+        if (logyKeSmazani.length === 0) {
+            alert("Nejsou zobrazeny žádné záznamy ke smazání. Upravte filtr.");
+            return;
+        }
+
+        if (!confirm(`POZOR! Opravdu chcete TRVALE SMAZAT ${logyKeSmazani.length} zobrazených záznamů o přihlášení?`)) {
+            return;
+        }
+
+        const heslo = prompt("Pro hromadné smazání zadejte heslo administrátora:");
+        if (heslo !== ADMIN_HESLO) {
+            alert("Nesprávné administrátorské heslo! Akce byla zrušena.");
+            return;
+        }
+
+        try {
+            document.getElementById('loginLogsBody').innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; font-weight:bold;">Mažu ${logyKeSmazani.length} záznamů... čekejte prosím.</td></tr>`;
+            
+            const slibyMazani = logyKeSmazani.map(log => db.collection("logy_prihlaseni").doc(log.docId).delete());
+            await Promise.all(slibyMazani);
+            
+            alert(`Úspěšně smazáno ${logyKeSmazani.length} záznamů.`);
+            
+            document.getElementById('logDateFrom').value = '';
+            document.getElementById('logDateTo').value = '';
+            nactiAvykresliLogy();
+
+        } catch (err) {
+            alert("Došlo k chybě při hromadném mazání: " + err);
+            nactiAvykresliLogy();
+        }
     }
 
     function exportToCSV() {
