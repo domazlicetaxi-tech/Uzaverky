@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Green Taxi Domažlice - Uzávěrky v5.5</title>
+    <title>Green Taxi Domažlice - Uzávěrky v5.9.9</title>
     <style>
         :root {
-            --primary-color: #2e7d32; /* Sytější, prémiová zelená */
+            --primary-color: #2e7d32; 
             --primary-light: #e8f5e9;
             --secondary-color: #4f5b66;
             --danger-color: #c62828;
-            --bg-color: #f1f5f9; /* Moderní světle šedé pozadí */
+            --bg-color: #f1f5f9; 
             --card-bg: #ffffff;
             --text-dark: #1e293b;
             --text-muted: #64748b;
-            --border-light: #e2e8f0;
+            --border-light: #cbd5e1; 
+            --checked-row-bg: #f0fdf4;
         }
 
-        /* Globální styly optimalizované pro mobil */
+        .servisni-radek {
+            background-color: #fef9c3 !important; /* Velmi světle žlutá barva */
+        } 
+
         * {
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; /* Odstraní modré bliknutí při kliknutí na mobilu */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         body { 
@@ -33,7 +37,7 @@
         }
 
         .container { 
-            max-width: 1200px; 
+            max-width: 1400px; 
             margin: auto; 
             background: var(--card-bg); 
             padding: 20px 15px; 
@@ -68,8 +72,7 @@
             to { opacity: 1; transform: translateY(0); } 
         }
         
-        /* Formulářové prvky skvělé pro prsty */
-        input, select { 
+        input, select, textarea { 
             display: block; 
             margin: 10px 0 18px 0; 
             padding: 14px; 
@@ -81,12 +84,17 @@
             transition: all 0.2s ease; 
             background-color: #f8fafc;
             color: var(--text-dark);
-            -webkit-appearance: none; /* Odstraní nativní iOS styly */
+            -webkit-appearance: none; 
         }
-        input:focus, select:focus { 
+        input:focus, select:focus, textarea:focus { 
             border-color: var(--primary-color); 
             background: #ffffff;
             box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+        }
+        input[readonly], textarea[readonly] {
+            background-color: #e2e8f0;
+            color: #64748b;
+            cursor: not-allowed;
         }
         
         label { 
@@ -97,7 +105,6 @@
             font-size: 14px; 
         }
         
-        /* Velká a snadno stisknutelná tlačítka */
         button { 
             background: var(--primary-color); 
             color: white; 
@@ -118,6 +125,11 @@
         button:active { 
             transform: scale(0.98); 
             filter: brightness(0.9);
+        }
+        button:disabled {
+            background: #94a3b8 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
         }
         .secondary-btn { 
             background: var(--secondary-color); 
@@ -158,15 +170,17 @@
             border: 1px solid #c8e6c9; 
         }
         
-        /* Kompaktní a čitelné tabulky s posuvem na mobilu */
         .table-responsive {
             width: 100%;
+            max-height: 75vh; 
+            overflow-y: auto;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             margin: 15px 0;
             border-radius: 8px;
             border: 1px solid var(--border-light);
         }
+        
         .bill-table { 
             width: 100%; 
             border-collapse: collapse; 
@@ -175,16 +189,32 @@
         }
         .bill-table th, .bill-table td { 
             padding: 10px 8px; 
-            border-bottom: 1px solid var(--border-light); 
-            text-align: center; 
+            border: 1px solid var(--border-light); 
+            text-align: left; 
         }
+        
         .bill-table th { 
             background: #f8fafc; 
             font-weight: bold; 
             color: var(--text-muted); 
             font-size: 11px; 
             text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: inset 0 -2px 0 var(--border-light);
         }
+        
+        .bill-table tr.row-checked {
+            background-color: var(--checked-row-bg) !important;
+        }
+        
+        .bill-table .number-col {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        
         .bill-table tr.section-title { 
             background: #f1f5f9; 
             font-weight: bold; 
@@ -195,7 +225,14 @@
         .minus { color: var(--danger-color); font-weight: 600; }
         .plus { color: var(--primary-color); font-weight: 600; }
         
-        /* Rekapitulace peněz */
+        .consumption-badge {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            display: block;
+            text-align: center;
+        }
+        
         .final-box { 
             background: var(--primary-color); 
             color: white; 
@@ -212,7 +249,6 @@
             text-shadow: 0 1px 3px rgba(0,0,0,0.15); 
         }
         
-        /* Mřížka vozidel upravená pro mobily */
         .fleet-grid { 
             display: grid; 
             grid-template-columns: repeat(2, 1fr); 
@@ -244,7 +280,6 @@
             transform: scale(0.97); 
         }
         
-        /* SPZ jako opravdová značka */
         .spz-tag { 
             background: #f8fafc; 
             border: 2px solid #1e293b; 
@@ -270,8 +305,7 @@
             border-radius: 1px; 
         }
 
-        /* Celoplošné překrytí pro podpis na mobilu */
-        #signOverlay { 
+        #signOverlay, #detailOverlay, #zavadyOverlay { 
             display: none; 
             position: fixed; 
             top: 0; 
@@ -282,15 +316,78 @@
             z-index: 2000; 
             backdrop-filter: blur(4px); 
         }
+        
         .overlay-box { 
             background: white; 
             width: 92%; 
-            max-width: 360px; 
-            margin: 20vh auto; 
-            padding: 25px; 
+            max-width: 460px; 
+            margin: 8vh auto; 
+            padding: 20px; 
             border-radius: 16px; 
-            text-align: center; 
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+            max-height: 84vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+       
+        #detailOverlay .overlay-box {
+            width: 96% !important;
+            max-width: 1200px !important;
+        }
+
+        @media (min-width: 992px) {
+            #detailOverlay .overlay-box {
+                width: 75% !important;
+            }
+            #zavadyOverlay .overlay-box {
+                width: 75% !important;
+                max-width: 1200px !important;
+            }
+            #zavadyOverlay .table-responsive {
+                overflow-x: hidden !important;
+            }
+            #zavadyOverlay table {
+                table-layout: fixed !important; 
+                width: 100% !important;
+            }
+            #zavadyOverlay th, 
+            #zavadyOverlay td {
+                white-space: normal !important; 
+                word-break: break-word !important; 
+                padding: 10px 6px !important;
+            }
+            #zavadyOverlay th:nth-child(1), #zavadyOverlay td:nth-child(1) { width: 100px; } 
+            #zavadyOverlay th:nth-child(2), #zavadyOverlay td:nth-child(2) { width: 95px; }  
+            #zavadyOverlay th:nth-child(4), #zavadyOverlay td:nth-child(4) { width: 85px; }  
+        }
+
+        #detailOverlay .overlay-box, 
+        #detailOverlay .detail-scroll-content,
+        #detailOverlay .detail-list,
+        #detailOverlay .detail-comment-box {
+            overflow-x: hidden !important;
+        }
+
+        #detailOverlay .overlay-box * {
+            word-break: break-word !important;
+            max-width: 100% !important;
+        }
+
+        .detail-header-fixed {
+            flex-shrink: 0;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            margin-bottom: 10px;
+        }
+
+        .detail-scroll-content {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 4px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .edit-car-input { 
@@ -311,8 +408,45 @@
             font-size: 12px; 
             font-weight: bold;
         }
+        .btn-detail {
+            background: #0284c7;
+            color: white; 
+            border: none; 
+            padding: 6px 10px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            font-weight: bold;
+        }
+        
+        .btn-status {
+            border: none;
+            padding: 5px 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            transition: transform 0.1s ease;
+        }
+        .btn-status:active {
+            transform: scale(0.9);
+        }
+        .status-unchecked {
+            background: #ffebee;
+            color: var(--danger-color);
+            border: 1px solid #ffcdd2;
+        }
+        .status-checked {
+            background: #e8f5e9;
+            color: var(--primary-color);
+            border: 1px solid #c8e6c9;
+            cursor: default;
+        }
 
-        /* Sekce filtrů pro admina v mřížce */
         .filter-container {
             display: grid;
             grid-template-columns: 1fr;
@@ -328,7 +462,7 @@
                 grid-template-columns: repeat(2, 1fr);
             }
             .admin-actions {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(5, 1fr);
             }
         }
         .filter-container select, .filter-container input {
@@ -344,6 +478,45 @@
             color: var(--text-muted);
             text-transform: uppercase;
         }
+        
+        .detail-list {
+            text-align: left;
+            font-size: 14px;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--border-light);
+        }
+        .detail-comment-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 13px;
+            word-break: break-word;
+            color: var(--text-dark);
+        }
+
+        .car-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        @media (min-width: 768px) {
+            .car-detail-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .car-info-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            padding: 15px;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body>
@@ -358,6 +531,7 @@
         <div class="nav-buttons">
             <button onclick="prihlasit()">VSTOUPIT DO SYSTÉMU</button>
             <button class="secondary-btn" onclick="vstoupitAdmin()">REGISTRACE (ADMIN)</button>
+            <button class="secondary-btn" style="background-color: #f59e0b; color: white;" onclick="vstoupitServis()">🔧 SERVIS</button>
         </div>
     </div>
 
@@ -412,9 +586,11 @@
         <label>Nádražáci (Kč):</label>
         <input type="number" id="odpNazdrazaci" value="0" onfocus="this.select()" onblur="if(this.value=='')this.value='0'" pattern="[0-9]*" inputmode="numeric">
         <label>Ostatní výdaje (Kč):</label>
-        <input type="number" id="odpDalsi" value="0" onfocus="this.select()" onblur="if(this.value=='')this.value='0'" pattern="[0-9]*" inputmode="numeric">
+        <input type="number" id="odpDalsi" value="0" onfocus="this.select()" onblur="if(this.value=='')this.value='0'" pattern="[0-9]*" inputmode="numeric" oninput="zkontrolovatNutnostPoznamky()">
+        <label id="lblPoznamka">Důvod výdaje (poznámka za co):</label>
+        <input type="text" id="odpDalsiPoznamka" placeholder="např. nákup žárovky, nákup vody...">
         <div class="nav-buttons">
-            <button onclick="prepnout('sec-km-deduction')">POKRAČOVAT</button>
+            <button onclick="validovatOstatniVydaje()">POKRAČOVAT</button>
             <button class="secondary-btn" onclick="prepnout('sec-fuel')">ZPĚT</button>
         </div>
     </div>
@@ -432,17 +608,25 @@
 
     <div id="sec-final" class="box">
         <div class="header-info car-label"></div>
-        
         <div class="table-responsive">
             <table class="bill-table" id="resTable"></table>
         </div>
-
         <div class="final-box">
             <span style="font-size: 13px; opacity: 0.95; font-weight: 600;">K ODEVZDÁNÍ</span>
             <span class="final-amount" id="billFinalCash">0 Kč</span>
             <input type="text" id="envelopeNum" placeholder="Obálka č." style="width:130px; margin:5px auto 0 auto; text-align:center; color: black; font-weight: bold; background: #ffffff;" onfocus="this.select()">
         </div>
         <div class="nav-buttons">
+            <div style="margin-top: 15px; margin-bottom: 15px;">
+                <button type="button" id="btnZavady" onclick="toggleZavady()" style="background-color: #ff9800; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; font-size: 15px;">
+                    🔧 Nahlásit závadu na vozidle
+                </button>
+            </div>
+
+            <div id="sekceZavady" style="display: none; margin-bottom: 15px;">
+                <label for="textZavady" style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">Popis závady (předá se administrátorovi):</label>
+                <textarea id="textZavady" rows="3" placeholder="Např. dřou zadní destičky, něco klepe na přední nápravě..." style="width: 100%; padding: 10px; box-sizing: border-box; border-radius: 5px; border: 2px solid #ff9800; font-size: 14px; font-family: sans-serif;"></textarea>
+            </div>
             <button onclick="validovatAotevritPodpis()">ODESLAT A ULOŽIT</button>
             <button class="secondary-btn" onclick="prepnout('sec-km-deduction')">ZPĚT</button>
         </div>
@@ -450,58 +634,157 @@
 
     <div id="sec-database" class="box">
         <h3>Archiv uzávěrek (Admin)</h3>
-        
         <button class="secondary-btn" onclick="prepnout('sec-login')" style="margin-bottom: 15px; padding: 12px; font-size: 15px;">⬅️ ZPĚT DO MENU</button>
         
         <div class="admin-actions">
             <button onclick="prepnout('sec-edit-cars')">🚗 SPRÁVA VOZIDEL</button>
+            <button onclick="prepnout('sec-fleet-cards')" style="background-color: #fd7e14;">🗂️ KARTA VOZIDEL</button>
             <button onclick="prepnout('sec-edit-drivers')" style="background-color: #17a2b8;">👥 SPRÁVA ŘIDIČŮ</button>
             <button style="background-color: #0284c7;" onclick="exportToCSV()">📥 CSV EXPORT</button>
+            <button style="background-color: #6f42c1;" onclick="vyvolatImportCSV()">📥 IMPORT DAT</button>
         </div>
 
+        <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="zprocessedImportCSV(event)">
+
         <div class="filter-container">
-            <div>
-                <span class="filter-label">Vozidlo</span>
-                <select id="carFilter" onchange="vykreslitDatabazi()"></select>
-            </div>
-            <div>
-                <span class="filter-label">Řidič</span>
-                <select id="driverFilter" onchange="vykreslitDatabazi()"></select>
-            </div>
-            <div>
-                <span class="filter-label">Datum od</span>
-                <input type="date" id="dateFromFilter" onchange="vykreslitDatabazi()">
-            </div>
-            <div>
-                <span class="filter-label">Datum do</span>
-                <input type="date" id="dateToFilter" onchange="vykreslitDatabazi()">
-            </div>
+            <div><span class="filter-label">Vozidlo</span><select id="carFilter" onchange="vykreslitDatabazi()"></select></div>
+            <div><span class="filter-label">Řidič</span><select id="driverFilter" onchange="vykreslitDatabazi()"></select></div>
+            <div><span class="filter-label">Datum od</span><input type="date" id="dateFromFilter" onchange="vykreslitDatabazi()"></div>
+            <div><span class="filter-label">Datum do</span><input type="date" id="dateToFilter" onchange="vykreslitDatabazi()"></div>
         </div>
         
         <div class="table-responsive">
             <table class="bill-table" id="adminDbTable">
                 <thead>
                     <tr>
-                        <th style="min-width: 110px;">Datum a čas</th>
+                        <th style="min-width: 80px; text-align: center;">📍 / Ok</th>
+                        <th style="min-width: 90px;">Datum / Čas</th> 
                         <th>Řidič</th>
                         <th>Vozidlo</th>
-                        <th>Obálka</th>
-                        <th>Km Start</th>
-                        <th>Km Cíl</th>
-                        <th>Odečet Km</th>
-                        <th>Tržba</th>
-                        <th>Litrů</th>
-                        <th>Cena Tank</th>
-                        <th>Km Pumpa</th>
-                        <th>Spotřeba</th>
-                        <th>Výdaje</th>
-                        <th>K ODEVZDÁNÍ</th>
-                        <th>Akce</th>
+                        <th>Obalka</th>
+                        <th class="number-col">Ujeto</th>
+                        <th class="number-col">Km Start</th>
+                        <th class="number-col">Km Cíl</th>
+                        <th class="number-col">Odečet</th>
+                        <th class="number-col">Tržba</th>
+                        <th class="number-col">Litrů</th>
+                        <th class="number-col">Cena Tank</th>
+                        <th class="number-col">Km Pumpa</th>
+                        <th style="text-align:center;">Spotřeba</th> 
+                        <th class="number-col">Výdaje</th>
+                        <th class="number-col">K ODEVZDÁNÍ</th>
+                        <th style="min-width: 135px; text-align: center;">Akce</th>
                     </tr>
                 </thead>
                 <tbody id="dbBody"></tbody>
             </table>
         </div>
+    </div>
+
+    <div id="sec-fleet-cards" class="box">
+        <h3>Karty vozidel - Výběr</h3>
+        <div class="fleet-grid" id="fleetCardsGrid"></div>
+        <button class="secondary-btn btn-back-cards" onclick="prepnout('sec-database')" style="margin-top: 25px;">ZPĚT</button>
+    </div>
+
+    <div id="sec-car-card-detail" class="box">
+        <h3 id="carCardTitle">Detail karty vozidla</h3>
+        
+        <div class="car-detail-grid">
+            <div class="car-info-box">
+                <h4>📋 Technické specifikace (Techničák)</h4>
+                
+                <label>VIN kód:</label>
+                <input type="text" id="cardVin" placeholder="Zadejte VIN kód">
+                
+                <label>Příští STK (Datum):</label>
+                <input type="date" id="cardStk">
+                
+                <label>Konec dálniční známky (Datum):</label>
+                <input type="date" id="cardZnamka">
+                
+                <label>Příští výměna oleje při (km):</label>
+                <input type="number" id="cardInterval" placeholder="např. 250000">
+
+                <label>Administrativní poznámka k autu:</label>
+                <textarea id="cardPoznamka" rows="3" placeholder="Pojištění, specifika auta..."></textarea>
+
+                <button id="btnUlozitKartaTech" onclick="ulozitUdajeKarty()" style="margin-top: 10px;">💾 ULOŽIT ÚDAJE KARTY</button>
+            </div>
+
+            <div class="car-info-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px;">
+                    <h4 style="margin: 0;">🔧 Historie oprav a náklady na údržbu</h4>
+                    <button type="button" class="secondary-btn" onclick="otevritHistoriiZavad()" style="margin: 0; padding: 8px 12px; font-size: 13px; background: #fd7e14; width: auto; font-weight: bold; white-space: nowrap;">Historie závad</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; align-items: flex-end;">
+                    <div>
+                        <label style="margin:0;">Datum:</label>
+                        <input type="date" id="repairDate" style="margin:5px 0 0 0; padding:10px;">
+                    </div>
+                    <div>
+                        <label style="margin:0;">Stav km:</label>
+                        <input type="number" id="repairKm" placeholder="km" style="margin:5px 0 0 0; padding:10px;">
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 100px; gap: 10px; align-items: flex-end;">
+                    <div>
+                        <label style="margin:0;">Popis opravy/servisu:</label>
+                        <input type="text" id="repairText" placeholder="výměna oleje, brzdy..." style="margin:5px 0 0 0; padding:10px;">
+                    </div>
+                    <div>
+                        <label style="margin:0;">Cena (Kč):</label>
+                        <input type="number" id="repairPrice" placeholder="0" style="margin:5px 0 0 0; padding:10px;">
+                    </div>
+                </div>
+                <button class="secondary-btn" onclick="pridatNakladKarty()" style="margin-top: 5px; padding: 10px; font-size:14px; background:#0284c7;">➕ PŘIDAT NÁKLAD</button>
+
+                <div style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-light);">
+                    <div style="display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 110px;">
+                            <label style="margin:0; font-size: 11px; font-weight: bold; color: var(--text-muted);">Filtr Od:</label>
+                            <input type="date" id="repairFilterOd" style="margin:2px 0 0 0; padding:6px; font-size: 13px;" onchange="vykreslitNakladyKarty()">
+                        </div>
+                        <div style="flex: 1; min-width: 110px;">
+                            <label style="margin:0; font-size: 11px; font-weight: bold; color: var(--text-muted);">Filtr Do:</label>
+                            <input type="date" id="repairFilterDo" style="margin:2px 0 0 0; padding:6px; font-size: 13px;" onchange="vykreslitNakladyKarty()">
+                        </div>
+                        <div style="flex: 1; min-width: 110px;">
+                            <label style="margin:0; font-size: 11px; font-weight: bold; color: var(--text-muted);">Zadal:</label>
+                            <select id="repairFilterAutor" style="margin:2px 0 0 0; padding:6px; font-size: 13px;" onchange="vykreslitNakladyKarty()">
+                                <option value="">Všichni</option>
+                                <option value="admin">Administrátor</option>
+                                <option value="servis">Servis</option>
+                            </select>
+                        </div>
+                        <button class="secondary-btn" onclick="vynulovatFiltrOprav()" style="margin:0; padding:7px 12px; font-size:12px; background: var(--secondary-color); width: auto;">❌</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 5px 0;">
+                    <h5 style="margin: 0; font-size:14px;">Přehled evidovaných oprav:</h5>
+                    <div style="font-size: 14px; font-weight: bold;">CELKEM NÁKLADY: <span class="minus" id="cardRepairsTotal">0 Kč</span></div>
+                </div>
+                <div class="table-responsive" style="max-height: 250px; margin: 5px 0;">
+                    <table class="bill-table">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Stav km</th>
+                                <th>Popis opravy</th>
+                                <th class="number-col">Cena</th>
+                                <th style="text-align: center;">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cardRepairsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <button class="secondary-btn" onclick="prepnout('sec-fleet-cards')" style="margin-top: 25px;">⬅️ ZPĚT NA VÝBĚR AUT</button>
     </div>
 
     <div id="sec-edit-cars" class="box">
@@ -512,7 +795,7 @@
                     <tr class="section-title">
                         <th>Název</th>
                         <th>SPZ</th>
-                        <th>Tachometr (km)</th>
+                        <th class="number-col">Tachometr (km)</th>
                     </tr>
                 </thead>
                 <tbody id="editCarsBody"></tbody>
@@ -527,6 +810,14 @@
     <div id="sec-edit-drivers" class="box">
         <h3>Správa řidičů</h3>
         
+        <div style="background: #fff8e1; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ffe082;">
+            <h4 style="margin-top: 0; margin-bottom:10px; color: #b78103; font-size:16px;">🔧 Heslo pro tlačítko SERVIS</h4>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <input type="text" id="adminServicePass" placeholder="Aktuální heslo servisu" style="margin:0; padding:10px; flex-grow: 1;">
+                <button onclick="ulozitHesloServisu()" style="padding: 12px; font-size: 15px; background-color: #f59e0b; width: auto; min-width: 140px;">ULOŽIT HESLO</button>
+            </div>
+        </div>
+
         <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-light);">
             <h4 style="margin-top: 0; margin-bottom:10px; color: var(--primary-color); font-size:16px;">Přidat nového řidiče</h4>
             <div style="display: flex; flex-direction:column; gap: 8px;">
@@ -535,7 +826,6 @@
                 <button onclick="adminPridatRidice()" style="padding: 12px; font-size: 15px;">PŘIDAT ŘIDIČE</button>
             </div>
         </div>
-
         <div class="table-responsive">
             <table class="bill-table">
                 <thead>
@@ -556,23 +846,54 @@
 </div>
 
 <div id="signOverlay">
-    <div class="overlay-box">
-        <h3>Potvrzení identity</h3>
-        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px;">Zadejte své osobní přihlašovací heslo.</p>
+    <div class="overlay-box" style="max-height:80vh; overflow-y:auto;">
+        <h3>Potvrzení identity a odeslání polohy</h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px;">Zadejte své osobní přihlašovací heslo. Po potvrzení bude odeslána vaše aktuální GPS poloha pro potvrzení uzávěrky.</p>
         <input type="password" id="signPass" placeholder="Heslo" style="margin-top:5px; margin-bottom:15px; background: #fff; border: 2px solid var(--primary-color);">
         <div class="nav-buttons">
-            <button onclick="finalniPodpisOdeslani()">POTVRDIT A ULOŽIT</button>
+            <button onclick="finalniPodpisOdeslani(this)">POTVRDIT A ULOŽIT</button>
             <button class="secondary-btn" onclick="document.getElementById('signOverlay').style.display='none'">ZRUŠIT</button>
         </div>
     </div>
 </div>
 
-<!-- NAHRÁNÍ FIREBASE SDK KNIHOVEN -->
+<div id="detailOverlay" onclick="kliknutoMimoDetail(event)">
+    <div class="overlay-box" id="detailOverlayBox">
+        <h3 style="margin-top:0; margin-bottom:12px; flex-shrink:0;">Detail uzávěrky</h3>
+        <div class="detail-header-fixed" id="detailFixedHeader"></div>
+        <div class="detail-scroll-content">
+            <div class="detail-list" id="detailContent"></div>
+        </div>
+        <button class="secondary-btn" style="margin-top:12px; flex-shrink:0;" onclick="document.getElementById('detailOverlay').style.display='none'">ZAVŘÍT</button>
+    </div>
+</div>
+
+<div id="zavadyOverlay" onclick="kliknutoMimoZavady(event)">
+    <div class="overlay-box" id="zavadyOverlayBox">
+        <h3 style="margin-top:0; margin-bottom:12px; flex-shrink:0;">Historie hlášených závad</h3>
+        <div class="detail-scroll-content">
+            <div class="table-responsive" style="margin: 0; max-height: 60vh;">
+                <table class="bill-table">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Řidič</th>
+                            <th>Popis závady</th>
+                            <th style="text-align: center;">Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody id="zavadyKartyBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <button class="secondary-btn" style="margin-top:12px; flex-shrink:0;" onclick="document.getElementById('zavadyOverlay').style.display='none'">ZAVŘÍT</button>
+    </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
-    // === VAŠE PROPOJOVACÍ ÚDAJE (FIREBASE CONFIG) ===
     const firebaseConfig = {
       apiKey: "AIzaSyCuY84v35xHCwVUwONnAsh3Hf-jozfLZwE",
       authDomain: "uzaverky-9be6a.firebaseapp.com",
@@ -582,12 +903,14 @@
       appId: "1:822628550738:web:93a046849f310b3110378b"
     };
 
-    // Inicializace Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const ADMIN_HESLO = "26 3654";
+    let SERVIS_HESLO = "servis123"; 
     const SAZBA = 9;
+
+    let jeServisak = false; 
 
     let ridici = { "admin": "1234" };
     let databaze = [];
@@ -608,26 +931,45 @@
     let auta = defaultAuta;
     let prihlasenyUzivatel = localStorage.getItem('taxi_user') || "";
     let vybraneAuto = null;
+    let docasneVypocty = {}; 
 
-    // Načítání dat živě ze serveru
+    let aktivniKartaAutoId = null;
+    let aktivniKartaData = { vin: "", stk: "", znamka: "", revize: "", interval: "", poznamka: "", naklady: [] };
+
+    function toggleZavady() {
+        let sekce = document.getElementById("sekceZavady");
+        let tlacitko = document.getElementById("btnZavady");
+        if (!sekce || !tlacitko) return;
+        
+        if (sekce.style.display === "none") {
+            sekce.style.display = "block";
+            tlacitko.style.backgroundColor = "#d32f2f";
+            tlacitko.innerText = "❌ Skrýt hlášení závady";
+        } else {
+            sekce.style.display = "none";
+            tlacitko.style.backgroundColor = "#ff9800";
+            tlacitko.innerText = "🔧 Nahlásit závadu na vozidle";
+            document.getElementById("textZavady").value = "";
+        }
+    }
+
     window.onload = () => {
-        // Načtení řidičů
-        db.collection("nastaveni").doc("ridici").onSnapshot((doc) => {
-            if (doc.exists) {
-                ridici = doc.data();
+        db.collection("nastaveni").doc("servis").onSnapshot((doc) => {
+            if (doc.exists && doc.data().heslo) {
+                SERVIS_HESLO = doc.data().heslo;
             } else {
-                db.collection("nastaveni").doc("ridici").set(ridici);
+                db.collection("nastaveni").doc("servis").set({ heslo: SERVIS_HESLO });
             }
+        });
+        db.collection("nastaveni").doc("ridici").onSnapshot((doc) => {
+            if (doc.exists) ridici = doc.data();
+            else db.collection("nastaveni").doc("ridici").set(ridici);
             nactiAdokresliRidice();
         });
 
-        // Načtení aut
         db.collection("nastaveni").doc("auta").onSnapshot((doc) => {
-            if (doc.exists) {
-                auta = doc.data().seznam || defaultAuta;
-            } else {
-                db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
-            }
+            if (doc.exists) auta = doc.data().seznam || defaultAuta;
+            else db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
             if (prihlasenyUzivatel) { 
                 prepnout('sec-fleet'); 
                 document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
@@ -637,16 +979,18 @@
             }
         });
 
-        // Načtení archivu uzávěrek
-        db.collection("uzaverky").orderBy("id", "asc").onSnapshot((querySnapshot) => {
+        db.collection("uzaverky").onSnapshot((querySnapshot) => {
             databaze = [];
             querySnapshot.forEach((doc) => {
                 let data = doc.data();
-                data.docId = doc.id; // Uložíme ID pro případné mazání
+                data.docId = doc.id; 
                 databaze.push(data);
             });
             vykreslitDatabazi();
             nactiFiltryVArchivu();
+            if (document.getElementById('zavadyOverlay') && document.getElementById('zavadyOverlay').style.display === 'block') {
+                otevritHistoriiZavad();
+            }
         });
     };
 
@@ -654,8 +998,12 @@
         document.querySelectorAll('.box').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         if(id === 'sec-edit-cars') vykreslitEditaciAut();
-        if(id === 'sec-edit-drivers') nactiAdokresliRidice();
+        if(id === 'sec-edit-drivers') {
+            nactiAdokresliRidice();
+            document.getElementById('adminServicePass').value = SERVIS_HESLO;
+        }
         if(id === 'sec-database') { nactiFiltryVArchivu(); vykreslitDatabazi(); }
+        if(id === 'sec-fleet-cards') vykreslitRozcestnikKaret();
         
         if(vybraneAuto) {
             document.querySelectorAll('.car-label').forEach(el => {
@@ -673,7 +1021,20 @@
                 <div class="car-card" onclick="vybratAuto(${a.id})">
                     <strong style="font-size: 15px;">${a.nazev}</strong>
                     <div class="spz-tag">${a.spz}</div>
-                    <div style="color:var(--primary-color); font-weight:bold; font-size:14px;">${a.km} km</div>
+                    <div style="color:var(--primary-color); font-weight:bold; font-size:14px; text-align:right;">${a.km} km</div>
+                </div>`;
+        });
+    }
+
+    function vykreslitRozcestnikKaret() {
+        const grid = document.getElementById('fleetCardsGrid');
+        grid.innerHTML = "";
+        const serazenaAuta = [...auta].sort((a, b) => a.id - b.id);
+        serazenaAuta.forEach(a => {
+            grid.innerHTML += `
+                <div class="car-card" onclick="otevritKartuVozidla(${a.id})" style="min-height:90px; border-color: #fd7e14;">
+                    <strong style="font-size: 15px;">${a.nazev}</strong>
+                    <div class="spz-tag" style="font-size:14px; min-width:90px;">${a.spz}</div>
                 </div>`;
         });
     }
@@ -683,14 +1044,25 @@
         prepnout('sec-km');
         document.getElementById('startKm').value = vybraneAuto.km;
         document.getElementById('endKm').value = "";
-        
         document.getElementById('fuelCena').value = "0";
         document.getElementById('fuelLitry').value = "0.00";
         document.getElementById('fuelKm').value = "0";
         document.getElementById('odpNazdrazaci').value = "0";
         document.getElementById('odpDalsi').value = "0";
+        
+        const inpPoznamka = document.getElementById('odpDalsiPoznamka');
+        inpPoznamka.value = "";
+        inpPoznamka.style.borderColor = "var(--border-light)";
+        document.getElementById('lblPoznamka').innerHTML = "Důvod výdaje (poznámka za co):";
         document.getElementById('odpocetKmVal').value = "0";
         document.getElementById('envelopeNum').value = "";
+        let sekceZavady = document.getElementById('sekceZavady');
+        if(sekceZavady) {
+            sekceZavady.style.display = "none";
+            document.getElementById('textZavady').value = "";
+            document.getElementById('btnZavady').style.backgroundColor = "#ff9800";
+            document.getElementById('btnZavady').innerText = "🔧 Nahlásit závadu na vozidle";
+        }
     }
 
     function prihlasit() {
@@ -702,14 +1074,49 @@
             prepnout('sec-fleet');
             document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
             vykreslitAuta();
+            
+            if (u === "admin") {
+                zkontrolovatBliziciSeSTK();
+            } else {
+                // ZMĚNA: Po přihlášení běžného řidiče se vyžádá sdílení polohy, aby na to byl prohlížeč připraven
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => { console.log("Poloha udělena."); },
+                        (err) => { console.warn("Uživatel polohu zatím nepovolil nebo došlo k chybě.", err); }
+                    );
+                }
+            }
+            
         } else alert("Neplatné přihlašovací údaje!");
     }
 
     function odhlasit() { localStorage.removeItem('taxi_user'); location.reload(); }
     
     function vstoupitAdmin() { 
-        if (prompt("Zadejte heslo administrátora:") === ADMIN_HESLO) {
-            prepnout('sec-reg'); 
+        if (prompt("Zadejte heslo administrátora:") === ADMIN_HESLO) prepnout('sec-reg'); 
+        else alert("Nesprávné administrátorské heslo!");
+    }
+
+    function vstoupitServis() {
+        if (prompt("Zadejte heslo pro vstup do servisu:") === SERVIS_HESLO) {
+            jeServisak = true;
+            prepnout('sec-fleet-cards'); 
+            
+            const btnBackCards = document.querySelector('#sec-fleet-cards .btn-back-cards');
+            if (btnBackCards) btnBackCards.style.display = 'none';
+            
+            if (!document.getElementById('btnOdhlasitServis')) {
+                document.getElementById('sec-fleet-cards').innerHTML += `<button id="btnOdhlasitServis" class="secondary-btn danger-btn" onclick="odhlasit()" style="margin-top: 15px;">ODHLÁSIT SERVIS</button>`;
+            }
+        } else {
+            alert("Nesprávné heslo servisu!");
+        }
+    }
+
+    function vstoupitDoDatabaze() {
+        if (prompt("Zadejte heslo administrátora pro vstup do archivu:") === ADMIN_HESLO) {
+            prepnout('sec-database');
+            zkontrolovatBliziciSeSTK(); 
         } else {
             alert("Nesprávné administrátorské heslo!");
         }
@@ -724,9 +1131,7 @@
                 alert(`Řidič "${u}" byl úspěšně vytvořen.`);
                 prepnout('sec-login'); 
             });
-        } else {
-            alert("Musíte vyplnit jméno i heslo!");
-        }
+        } else alert("Musíte vyplnit jméno i heslo!");
     }
 
     function prejitNaTankovani() {
@@ -742,7 +1147,6 @@
         const valCena = document.getElementById('fuelCena').value.trim();
         const valLitry = document.getElementById('fuelLitry').value.trim();
         const valKm = document.getElementById('fuelKm').value.trim();
-
         const numCena = parseFloat(valCena) || 0;
         const numLitry = parseFloat(valLitry) || 0;
         const numKm = parseInt(valKm) || 0;
@@ -767,254 +1171,706 @@
         prepnout('sec-deductions');
     }
 
-    function vypocitatSpotrebu() {
-        const fuelL = parseFloat(document.getElementById('fuelLitry').value) || 0;
-        const fuelKm = parseInt(document.getElementById('fuelKm').value) || 0;
+    function zkontrolovatNutnostPoznamky() {
+        const dalsiVydaje = parseFloat(document.getElementById('odpDalsi').value) || 0;
+        const lbl = document.getElementById('lblPoznamka');
+        const inp = document.getElementById('odpDalsiPoznamka');
+        if (dalsiVydaje > 0) lbl.innerHTML = 'Důvod výdaje (poznámka za co): <span style="color:var(--danger-color); font-weight:bold;">* POVINNÉ POLE</span>';
+        else { lbl.innerHTML = 'Důvod výdaje (poznámka za co):'; inp.style.borderColor = "var(--border-light)"; }
+    }
 
-        if (fuelL <= 0 || fuelKm <= 0) return "-";
-        
-        const historieTohotoAuta = databaze.filter(z => z.auto === vybraneAuto.nazev && z.tankKm > 0);
-        if (historieTohotoAuta.length === 0) return "První měření";
+    function validovatOstatniVydaje() {
+        const dalsiVydaje = parseFloat(document.getElementById('odpDalsi').value) || 0;
+        const poznamka = document.getElementById('odpDalsiPoznamka').value.trim();
+        const inp = document.getElementById('odpDalsiPoznamka');
 
-        const minuleKmTank = historieTohotoAuta[historieTohotoAuta.length - 1].tankKm;
-        const ujeteKmOdPumpy = fuelKm - minuleKmTank;
-
-        if(ujeteKmOdPumpy <= 0) return "Chyba nájezdu pumpy";
-        return ((fuelL / ujeteKmOdPumpy) * 100).toFixed(2) + " l/100km";
+        if (dalsiVydaje > 0 && poznamka === "") {
+            alert("Chyba: Pokud vyplníte 'Ostatní výdaje', musíte napsat i důvod výdaje do poznámky!");
+            inp.style.borderColor = "var(--danger-color)";
+            inp.focus();
+            return;
+        }
+        inp.style.borderColor = "var(--border-light)";
+        prepnout('sec-km-deduction');
     }
 
     function zobrazitFinalniVyuctovani() {
         const start = parseInt(document.getElementById('startKm').value) || 0;
         const end = parseInt(document.getElementById('endKm').value) || 0;
-        const odecetKm = parseInt(document.getElementById('odpocetKmVal').value) || 0;
-        
-        const celkemKm = end - start;
-        const uctovaneKm = Math.max(0, celkemKm - odecetKm);
-        const trzba = uctovaneKm * SAZBA;
-
         const fuelCena = parseFloat(document.getElementById('fuelCena').value) || 0;
+        const fuelLitry = parseFloat(document.getElementById('fuelLitry').value) || 0;
+        const fuelKm = parseInt(document.getElementById('fuelKm').value) || 0;
         const nazdrazaci = parseFloat(document.getElementById('odpNazdrazaci').value) || 0;
-        const dalsiVydaje = parseFloat(document.getElementById('odpDalsi').value) || 0;
-        const celkemVydaje = fuelCena + nazdrazaci + dalsiVydaje;
+        const dalsi = parseFloat(document.getElementById('odpDalsi').value) || 0;
+        const dalsiPozn = document.getElementById('odpDalsiPoznamka').value.trim();
+        const odpoKm = parseInt(document.getElementById('odpocetKmVal').value) || 0;
 
-        const kOdevzdani = trzba - celkemVydaje;
+        const celkemUjeto = end - start;
+        const cisteKm = Math.max(0, celkemUjeto - odpoKm);
+        const trzba = cisteKm * SAZBA;
+        const celkoveVydaje = fuelCena + nazdrazaci + dalsi;
+        const kOdevzdani = trzba - celkoveVydaje;
 
-        document.getElementById('billFinalCash').innerText = kOdevzdani.toLocaleString('cs-CZ') + " Kč";
+        docasneVypocty = {
+            id: Date.now(),
+            datum: new Date().toLocaleString("cs-CZ"),
+            ridic: prihlasenyUzivatel,
+            autoId: vybraneAuto.id,
+            autoNazev: vybraneAuto.nazev,
+            autoSpz: vybraneAuto.spz,
+            kmStart: start,
+            kmCil: end,
+            ujetoCelkem: celkemUjeto,
+            odpocetKm: odpoKm,
+            cisteKm: cisteKm,
+            trzbaBrutto: trzba,
+            fuelCena: fuelCena,
+            fuelLitry: fuelLitry,
+            fuelKm: fuelKm,
+            vydajeNazdrazaci: nazdrazaci,
+            vydajeOstatni: dalsi,
+            vydajePoznamka: dalsiPozn,
+            celkoveVydaje: celkoveVydaje,
+            kOdevzdani: kOdevzdani,
+            zkontrolovano: false 
+        };
 
-        const table = document.getElementById('resTable');
-        table.innerHTML = `
-            <tr class="section-title"><th colspan="2">Přehled jízdy</th></tr>
-            <tr><td>Počáteční stav tachometru:</td><td>${start} km</td></tr>
-            <tr><td>Koncový stav tachometru:</td><td>${end} km</td></tr>
-            <tr><td>Celkem najeto:</td><td>${celkemKm} km</td></tr>
-            <tr><td>Korekce kilometrů (odečet):</td><td class="minus">-${odecetKm} km</td></tr>
-            <tr style="font-weight:bold;"><td>Fakturované kilometry:</td><td>${uctovaneKm} km</td></tr>
+        const resTable = document.getElementById('resTable');
+        resTable.innerHTML = `
+            <tr class="section-title"><td colspan="2">KILOMETRY A TRŽBA</td></tr>
+            <tr><td>Počáteční stav tachometru:</td><td class="number-col">${start} km</td></tr>
+            <tr><td>Koncový stav tachometru:</td><td class="number-col">${end} km</td></tr>
+            <tr><td>Celkem ujeto v rámci směny:</td><td class="number-col"><strong>${celkemUjeto} km</strong></td></tr>
+            <tr><td>Korekce (odečet kilometrů):</td><td class="minus number-col">-${odpoKm} km</td></tr>
+            <tr><td>Kilometry k vyúčtování:</td><td class="number-col"><strong>${cisteKm} km</strong></td></tr>
+            <tr><td>Hrubá tržba (${SAZBA} Kč/km):</td><td class="plus number-col">${trzba} Kč</td></tr>
             
-            <tr class="section-title"><th colspan="2">Finanční rekapitulace</th></tr>
-            <tr><td>Hrubá tržba (${SAZBA} Kč/km):</td><td class="plus">${trzba.toLocaleString('cs-CZ')} Kč</td></tr>
-            <tr><td>Výdaje za tankování:</td><td class="minus">-${fuelCena.toLocaleString('cs-CZ')} Kč</td></tr>
-            <tr><td>Nádražáci poplatky:</td><td class="minus">-${nazdrazaci.toLocaleString('cs-CZ')} Kč</td></tr>
-            <tr><td>Ostatní schválené výdaje:</td><td class="minus">-${dalsiVydaje.toLocaleString('cs-CZ')} Kč</td></tr>
-            <tr style="font-weight:bold; background:#f8fafc;"><td>Vypočtená spotřeba:</td><td>${vypocitatSpotrebu()}</td></tr>
+            <tr class="section-title"><td colspan="2">NÁKLADY A VÝDAJE</td></tr>
+            <tr><td>Tankování:</td><td class="minus number-col">-${fuelCena} Kč (${fuelLitry} l)</td></tr>
+            <tr><td>Nádražáci:</td><td class="minus number-col">-${nazdrazaci} Kč</td></tr>
+            <tr><td>Ostatní výdaje:</td><td class="minus number-col">-${dalsi} Kč ${dalsiPozn ? '<br><small>('+dalsiPozn+')</small>' : ''}</td></tr>
+            <tr style="background:#f8fafc; font-weight:bold;"><td>Výdaje celkem:</td><td class="minus number-col">-${celkoveVydaje} Kč</td></tr>
         `;
+
+        document.getElementById('billFinalCash').innerText = kOdevzdani + " Kč";
         prepnout('sec-final');
     }
 
     function validovatAotevritPodpis() {
         const env = document.getElementById('envelopeNum').value.trim();
         if(!env) {
-            alert("Musíte zadat číslo obálky!");
+            alert("Chyba: Před odesláním musíte vyplnit číslo obálky!");
+            document.getElementById('envelopeNum').focus();
             return;
         }
+        docasneVypocty.obalka = env;
+        docasneVypocty.zavada = document.getElementById('textZavady') ? document.getElementById('textZavady').value.trim() : "";
         document.getElementById('signPass').value = "";
-        document.getElementById('signOverlay').style.display = "block";
+        document.getElementById('signOverlay').style.display = 'block';
     }
 
-    function finalniPodpisOdeslani() {
+    // ZMĚNA: Získání polohy a zajištění jejího vynucení před uložením do Firestore
+    function finalniPodpisOdeslani(btnElement) {
         const pass = document.getElementById('signPass').value;
-        if (ridici[prihlasenyUzivatel] !== pass) {
-            alert("Nesprávné přihlašovací heslo! Ověření identity selhalo.");
-            return;
-        }
-
-        const start = parseInt(document.getElementById('startKm').value) || 0;
-        const end = parseInt(document.getElementById('endKm').value) || 0;
-        const odecetKm = parseInt(document.getElementById('odpocetKmVal').value) || 0;
-        const celkemKm = end - start;
-        const uctovaneKm = Math.max(0, celkemKm - odecetKm);
-        const trzba = uctovaneKm * SAZBA;
-
-        const fuelCena = parseFloat(document.getElementById('fuelCena').value) || 0;
-        const fuelLitry = parseFloat(document.getElementById('fuelLitry').value) || 0;
-        const fuelKm = parseInt(document.getElementById('fuelKm').value) || 0;
-        
-        const nazdrazaci = parseFloat(document.getElementById('odpNazdrazaci').value) || 0;
-        const dalsiVydaje = parseFloat(document.getElementById('odpDalsi').value) || 0;
-        const celkemVydaje = fuelCena + nazdrazaci + dalsiVydaje;
-        const kOdevzdani = trzba - celkemVydaje;
-        const env = document.getElementById('envelopeNum').value.trim();
-
-        const novaUzavreka = {
-            id: Date.now(),
-            datum: new Date().toLocaleString('cs-CZ'),
-            rawDatum: new Date().toISOString(),
-            ridic: prihlasenyUzivatel,
-            auto: vybraneAuto.nazev,
-            obalka: env,
-            kmStart: start,
-            kmEnd: end,
-            kmOdecet: odecetKm,
-            kmNajeto: celkemKm,
-            kmUctovane: uctovaneKm,
-            trzba: trzba,
-            tankLitry: fuelLitry,
-            tankCena: fuelCena,
-            tankKm: fuelKm,
-            vydaje: celkemVydaje,
-            kOdevzdani: kOdevzdani,
-            spotreba: vypocitatSpotrebu()
-        };
-
-        // 1. Uložit uzávěrku do kolekce na serveru
-        db.collection("uzaverky").add(novaUzavreka).then(() => {
-            // 2. Aktualizovat kilometry u konkrétního auta na serveru
-            vybraneAuto.km = end;
-            db.collection("nastaveni").doc("auta").set({ seznam: auta }).then(() => {
+        if (ridici[prihlasenyUzivatel] === pass) {
+            
+            const ulozDoDatabaze = () => {
                 document.getElementById('signOverlay').style.display = 'none';
-                alert("Uzávěrka úspěšně uložena a synchronizována na server!");
-                prepnout('sec-fleet');
-            });
-        }).catch(err => {
-            alert("Chyba při ukládání na server: " + err.message);
-        });
-    }
+                db.collection("uzaverky").add(docasneVypocty).then(() => {
+                    const index = auta.findIndex(a => a.id === vybraneAuto.id);
+                    if (index !== -1) {
+                        auta[index].km = docasneVypocty.kmCil;
+                        db.collection("nastaveni").doc("auta").set({ seznam: auta }).then(() => {
+                            alert("Uzávěrka byla úspěšně uložena a stav tachometru vozidla aktualizován.");
+                            location.reload();
+                        });
+                    } else {
+                        alert("Uzávěrka uložena, ale nepodařilo se najít vozidlo k aktualizaci km.");
+                        location.reload();
+                    }
+                }).catch(err => {
+                    alert("Chyba při ukládání: " + err);
+                    if(btnElement) { btnElement.innerText = "POTVRDIT A ULOŽIT"; btnElement.disabled = false; }
+                });
+            };
 
-    // Funkce administrace
-    function vstoupitDoDatabaze() {
-        if (prompt("Zadejte heslo pro vstup do archivu:") === ADMIN_HESLO) {
-            prepnout('sec-database');
+            // Zjištění polohy, pokud to není administrátor odesílající uzávěrku
+            if (navigator.geolocation && prihlasenyUzivatel !== 'admin') {
+                if(btnElement) {
+                    btnElement.innerText = "ZÍSKÁVÁM POLOHU...";
+                    btnElement.disabled = true;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        docasneVypocty.gpsLat = pos.coords.latitude;
+                        docasneVypocty.gpsLng = pos.coords.longitude;
+                        ulozDoDatabaze();
+                    },
+                    (err) => {
+                        if (err.code === 1) { // 1 = PERMISSION_DENIED
+                            alert("CHYBA: Pro odeslání uzávěrky MUSÍTE v prohlížeči povolit sdílení polohy!");
+                            if(btnElement) { btnElement.innerText = "POTVRDIT A ULOŽIT"; btnElement.disabled = false; }
+                        } else {
+                            // Selhání (např. v budově není GPS signál), odešle se bez ní
+                            alert("Nepodařilo se získat přesnou polohu (slabý signál). Uzávěrka bude odeslána bez lokace.");
+                            docasneVypocty.gpsLat = null;
+                            docasneVypocty.gpsLng = null;
+                            ulozDoDatabaze();
+                        }
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                ulozDoDatabaze(); // Pokud prohlížeč vůbec nepodporuje geolokaci nebo jde o admina
+            }
+
         } else {
-            alert("Přístup zamítnut!");
+            alert("Nesprávné heslo! Identita nebyla potvrzena.");
         }
     }
 
     function nactiFiltryVArchivu() {
-        const carFilter = document.getElementById('carFilter');
-        const driverFilter = document.getElementById('driverFilter');
+        const carSel = document.getElementById('carFilter');
+        const drvSel = document.getElementById('driverFilter');
         
-        const staryCar = carFilter.value;
-        const staryDriver = driverFilter.value;
+        const vybraneCar = carSel.value;
+        const vybraneDrv = drvSel.value;
 
-        carFilter.innerHTML = '<option value="">-- Všechna auta --</option>';
-        driverFilter.innerHTML = '<option value="">-- Všichni řidiči --</option>';
+        carSel.innerHTML = '<option value="">-- Všechna vozidla --</option>';
+        drvSel.innerHTML = '<option value="">-- Všichni řidiči --</option>';
 
-        const listAut = [...new Set(databaze.map(z => z.auto))];
-        listAut.forEach(c => carFilter.innerHTML += `<option value="${c}">${c}</option>`);
+        let uniqueCars = [...new Set(databaze.map(d => d.autoNazev).filter(Boolean))];
+        let uniqueDrivers = [...new Set(databaze.map(d => d.ridic).filter(Boolean))];
 
-        const listRidicu = [...new Set(databaze.map(z => z.ridic))];
-        listRidicu.forEach(r => driverFilter.innerHTML += `<option value="${r}">${r}</option>`);
+        uniqueCars.forEach(c => carSel.innerHTML += `<option value="${c}">${c}</option>`);
+        uniqueDrivers.forEach(d => drvSel.innerHTML += `<option value="${d}">${d}</option>`);
 
-        carFilter.value = staryCar;
-        driverFilter.value = staryDriver;
+        carSel.value = vybraneCar;
+        drvSel.value = vybraneDrv;
+    }
+
+    function zmenitStavKontroly(docId, aktualniStav) {
+        if (aktualniStav === true) return; 
+        
+        db.collection("uzaverky").doc(docId).update({
+            zkontrolovano: true
+        }).then(() => {
+            const item = databaze.find(d => d.docId === docId);
+            if (item) item.zkontrolovano = true;
+            vykreslitDatabazi();
+        }).catch(err => alert("Chyba při změně stavu: " + err));
+    }
+
+    function kliknutoMimoDetail(event) {
+        const overlayBox = document.getElementById('detailOverlayBox');
+        if (!overlayBox.contains(event.target)) {
+            document.getElementById('detailOverlay').style.display = 'none';
+        }
+    }
+
+    function kliknutoMimoZavady(event) {
+        const overlayBox = document.getElementById('zavadyOverlayBox');
+        if (!overlayBox.contains(event.target)) {
+            document.getElementById('zavadyOverlay').style.display = 'none';
+        }
     }
 
     function vykreslitDatabazi() {
-        const body = document.getElementById('dbBody');
-        body.innerHTML = "";
+        const carF = document.getElementById('carFilter').value;
+        const drvF = document.getElementById('driverFilter').value;
+        const dateFromF = document.getElementById('dateFromFilter').value;
+        const dateToF = document.getElementById('dateToFilter').value;
 
-        const fCar = document.getElementById('carFilter').value;
-        const fDriver = document.getElementById('driverFilter').value;
-        const fDateFrom = document.getElementById('dateFromFilter').value;
-        const fDateTo = document.getElementById('dateToFilter').value;
+        const tbody = document.getElementById('dbBody');
+        tbody.innerHTML = "";
 
-        let filtrovano = [...databaze];
+        const filtrovanaData = databaze.filter(d => {
+            if (carF && d.autoNazev !== carF) return false;
+            if (drvF && d.ridic !== drvF) return false;
+            
+            if (dateFromF || dateToF) {
+                const match = (d.datum || "").match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+                if (!match) return false;
+                
+                const dDate = new Date(match[3], match[2] - 1, match[1]);
+                
+                if (dateFromF) {
+                    const fromDate = new Date(dateFromF);
+                    fromDate.setHours(0, 0, 0, 0); 
+                    if (dDate < fromDate) return false;
+                }
+                if (dateToF) {
+                    const toDate = new Date(dateToF);
+                    toDate.setHours(23, 59, 59, 999); 
+                    if (dDate > toDate) return false;
+                }
+            }
+            return true;
+        }).sort((a, b) => {
+            const idA = a.id || 0;
+            const idB = b.id || 0;
+            if (idA !== idB) return idB - idA;
+            return (b.datum || "").localeCompare(a.datum || "");
+        });
 
-        if(fCar) filtrovano = filtrovano.filter(z => z.auto === fCar);
-        if(fDriver) filtrovano = filtrovano.filter(z => z.ridic === fDriver);
-        
-        if(fDateFrom) {
-            const dFrom = new Date(fDateFrom).setHours(0,0,0,0);
-            filtrovano = filtrovano.filter(z => new Date(z.rawDatum).getTime() >= dFrom);
-        }
-        if(fDateTo) {
-            const dTo = new Date(fDateTo).setHours(23,59,59,999);
-            filtrovano = filtrovano.filter(z => new Date(z.rawDatum).getTime() <= dTo);
-        }
+        filtrovanaData.forEach(d => {
+            const plnyDatum = d.datum || "Neznámé datum";
+            let datumElement = plnyDatum;
+            if(plnyDatum.includes(",")) {
+                const parts = plnyDatum.split(",");
+                datumElement = `${parts[0].trim()}<br><span style="font-size:11px; color:var(--text-muted); display:block; margin-top:2px;">${parts[1].trim()}</span>`;
+            }
 
-        // Řazení od nejnovějších uzávěrek
-        filtrovano.sort((a,b) => b.id - a.id);
+            const ridic = d.ridic || "Neznámý";
+            const autoNazev = d.autoNazev || "Auto";
+            const autoSpz = d.autoSpz || "-";
+            const obalka = d.obalka || "-";
+            
+            const kmStart = d.kmStart !== undefined ? parseInt(d.kmStart) : 0;
+            const kmCil = d.kmCil !== undefined ? parseInt(d.kmCil) : 0;
+            const odpocetKm = d.odpocetKm !== undefined ? parseInt(d.odpocetKm) : 0;
+            
+            let ujetoCelkem = d.ujetoCelkem !== undefined ? parseInt(d.ujetoCelkem) : 0;
+            if (ujetoCelkem === 0 && kmCil > kmStart) {
+                ujetoCelkem = kmCil - kmStart;
+            }
 
-        filtrovano.forEach(z => {
-            body.innerHTML += `
-                <tr>
-                    <td class="nowrap">${z.datum}</td>
-                    <td><b>${z.ridic}</b></td>
-                    <td class="nowrap">${z.auto}</td>
-                    <td><b>${z.obalka || '-'}</b></td>
-                    <td>${z.kmStart}</td>
-                    <td>${z.kmEnd}</td>
-                    <td class="minus">-${z.kmOdecet}</td>
-                    <td class="plus">${z.trzba} Kč</td>
-                    <td>${z.tankLitry} l</td>
-                    <td>${z.tankCena} Kč</td>
-                    <td>${z.tankKm}</td>
-                    <td>${z.spotreba || '-'}</td>
-                    <td class="minus">-${z.vydaje} Kč</td>
-                    <td style="font-weight:bold; background:#e8f5e9;">${z.kOdevzdani} Kč</td>
-                    <td><button class="btn-delete" onclick="smazatZaznam('${z.docId}')">Smazat</button></td>
-                </tr>`;
+            const cisteKm = Math.max(0, ujetoCelkem - odpocetKm);
+
+            let trzbaBrutto = d.trzbaBrutto !== undefined ? parseInt(d.trzbaBrutto) : 0;
+            if (trzbaBrutto === 0 && cisteKm > 0) {
+                trzbaBrutto = cisteKm * SAZBA;
+            }
+
+            const fuelLitry = d.fuelLitry !== undefined ? parseFloat(d.fuelLitry) : 0;
+            const fuelCena = d.fuelCena !== undefined ? parseInt(d.fuelCena) : 0;
+            const fuelKm = d.fuelKm !== undefined ? parseInt(d.fuelKm) : 0;
+            const vydajeNazdrazaci = d.vydajeNazdrazaci !== undefined ? parseInt(d.vydajeNazdrazaci) : 0;
+            const vydajeOstatni = d.vydajeOstatni !== undefined ? parseInt(d.vydajeOstatni) : 0;
+            const kOdevzdani = d.kOdevzdani !== undefined ? parseInt(d.kOdevzdani) : 0;
+            const zkontrolovano = d.zkontrolovano || false;
+
+            let spotrebaText = "0.00 l";
+            try {
+                if (fuelLitry > 0 && fuelKm > kmStart) {
+                    let diff = fuelKm - kmStart;
+                    if (diff > 0) {
+                        spotrebaText = ((fuelLitry / diff) * 100).toFixed(2) + " l";
+                    }
+                }
+            } catch(e) { spotrebaText = "0.00 l"; }
+
+            // Tlačítko kontroly
+            let statusBtn = '';
+            if (zkontrolovano) {
+                statusBtn = `<button class="btn-status status-checked" title="Zkontrolováno">✔️</button>`;
+            } else {
+                statusBtn = `<button class="btn-status status-unchecked" onclick="zmenitStavKontroly('${d.docId}', false)" title="Nezkontrolováno - Kliknutím schválíte">❌</button>`;
+            }
+
+            // ZMĚNA: Tlačítko pro Mapu (Poloha)
+            let mapBtn = '';
+            if (d.gpsLat && d.gpsLng) {
+                mapBtn = `<button class="btn-status" style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:16px;" title="Zobrazit místo odeslání na mapě" onclick="window.open('https://maps.google.com/?q=${d.gpsLat},${d.gpsLng}', '_blank')">📍</button>`;
+            } else {
+                mapBtn = `<button class="btn-status" style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; font-size:16px; cursor:not-allowed; opacity:0.6;" title="Poloha není k dispozici">📍</button>`;
+            }
+
+            const rowClass = zkontrolovano ? 'class="row-checked"' : '';
+
+            tbody.innerHTML += `
+                <tr ${rowClass}>
+                    <td style="text-align: center;">
+                        <div style="display:flex; justify-content:center; gap:6px;">
+                            ${mapBtn}
+                            ${statusBtn}
+                        </div>
+                    </td>
+                    <td class="nowrap" style="line-height:1.2;">${datumElement}</td>
+                    <td><strong>${ridic}</strong></td>
+                    <td class="nowrap">${autoNazev} <br><small>${autoSpz}</small></td>
+                    <td><strong>${obalka}</strong></td>
+                    <td class="number-col"><strong>${ujetoCelkem} km</strong></td>
+                    <td class="number-col">${kmStart}</td>
+                    <td class="number-col">${kmCil}</td>
+                    <td class="minus number-col">-${odpocetKm}</td>
+                    <td class="plus number-col">${trzbaBrutto} Kč</td>
+                    <td class="number-col">${fuelLitry} l</td>
+                    <td class="number-col">${fuelCena} Kč</td>
+                    <td class="number-col">${fuelKm}</td>
+                    <td><span class="consumption-badge">${spotrebaText}</span></td> 
+                    <td class="number-col">
+                        N: ${vydajeNazdrazaci} Kč<br>O: ${vydajeOstatni} Kč
+                    </td>
+                    <td style="font-weight:bold; background-color: rgba(46,125,50,0.08);" class="number-col">${kOdevzdani} Kč</td>
+                    <td>
+                        <div style="display:flex; gap:4px; justify-content:center;">
+                            <button class="btn-detail" onclick="otevritDetailUzavetky('${d.docId}')">DETAIL</button>
+                            <button class="btn-delete" onclick="smazatZaznam('${d.docId}')">SMAZAT</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         });
     }
 
+    function otevritDetailUzavetky(docId) {
+        const item = databaze.find(d => d.docId === docId);
+        if(!item) return;
+
+        const datum = item.datum || "Neznámé datum";
+        const ridic = item.ridic || "Neznámý řidič";
+        const autoNazev = item.autoNazev || "Neznámé auto";
+        const autoSpz = item.autoSpz || "-";
+        const obalka = item.obalka || "-";
+        
+        const kmStart = item.kmStart !== undefined ? parseInt(item.kmStart) : 0;
+        const kmCil = item.kmCil !== undefined ? parseInt(item.kmCil) : 0;
+        const odpocetKm = item.odpocetKm !== undefined ? parseInt(item.odpocetKm) : 0;
+        
+        let ujetoCelkem = item.ujetoCelkem !== undefined ? parseInt(item.ujetoCelkem) : 0;
+        if(ujetoCelkem === 0 && kmCil > kmStart) {
+            ujetoCelkem = kmCil - kmStart;
+        }
+        
+        const cisteKm = Math.max(0, ujetoCelkem - odpocetKm);
+        
+        let trzbaBrutto = item.trzbaBrutto !== undefined ? parseInt(item.trzbaBrutto) : 0;
+        if (trzbaBrutto === 0 && cisteKm > 0) {
+            trzbaBrutto = cisteKm * SAZBA;
+        }
+
+        const fuelLitry = item.fuelLitry !== undefined ? item.fuelLitry : 0;
+        const fuelCena = item.fuelCena !== undefined ? item.fuelCena : 0;
+        const fuelKm = item.fuelKm !== undefined ? item.fuelKm : 0;
+        const vydajeNazdrazaci = item.vydajeNazdrazaci !== undefined ? item.vydajeNazdrazaci : 0;
+        const vydajeOstatni = item.vydajeOstatni !== undefined ? item.vydajeOstatni : 0;
+        const vydajePoznamka = item.vydajePoznamka || "";
+        const kOdevzdani = item.kOdevzdani !== undefined ? item.kOdevzdani : 0;
+        const nahlenaZavada = item.zavada || "";
+        
+        document.getElementById('detailFixedHeader').innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px; margin-bottom:5px;">
+                <span>👤 Řidič: ${ridic}</span>
+                <span>✉️ Obálka: ${obalka}</span>
+            </div>
+            <div style="font-size:13px; color:var(--text-muted);">
+                📅 Datum: ${datum}<br>
+                🚗 Vozidlo: ${autoNazev} (${autoSpz})
+            </div>
+        `;
+
+        let spotrebaText = "N/A";
+        if (fuelLitry > 0 && fuelKm > kmStart) {
+            spotrebaText = ((fuelLitry / (fuelKm - kmStart)) * 100).toFixed(2) + " l/100km";
+        }
+
+        document.getElementById('detailContent').innerHTML = `
+            <div class="detail-item"><span>Počáteční tachometr:</span><strong>${kmStart} km</strong></div>
+            <div class="detail-item"><span>Koncový tachometr:</span><strong>${kmCil} km</strong></div>
+            <div class="detail-item"><span>Celkem najeto:</span><strong>${ujetoCelkem} km</strong></div>
+            <div class="detail-item"><span>Korekce kilometrů:</span><strong class="minus">-${odpocetKm} km</strong></div>
+            <div class="detail-item"><span>Kilometry k vyúčtování:</span><strong>${cisteKm} km</strong></div>
+            <div class="detail-item"><span>Hrubá tržba (${SAZBA} Kč/km):</span><strong class="plus">${trzbaBrutto} Kč</strong></div>
+            <div style="margin: 10px 0; border-bottom:2px solid var(--border-light);"></div>
+            <div class="detail-item"><span>Cena tankování:</span><strong class="minus">-${fuelCena} Kč</strong></div>
+            <div class="detail-item"><span>Natankováno litrů:</span><strong>${fuelLitry} l</strong></div>
+            <div class="detail-item"><span>Tachometr při tankování:</span><strong>${fuelKm} km</strong></div>
+            <div class="detail-item"><span>Vypočtená spotřeba:</span><strong>${spotrebaText}</strong></div>
+            <div style="margin: 10px 0; border-bottom:2px solid var(--border-light);"></div>
+            <div class="detail-item"><span>Výdaje nádražáci:</span><strong class="minus">-${vydajeNazdrazaci} Kč</strong></div>
+            <div class="detail-item"><span>Ostatní hotovostní výdaje:</span><strong class="minus">-${vydajeOstatni} Kč</strong></div>
+            
+            ${vydajePoznamka ? `
+                <div style="margin-top: 10px; font-weight: 600; font-size: 13px; color: var(--text-muted);">Důvod výdajů (Kompletní poznámka):</div>
+                <div class="detail-comment-box">${vydajePoznamka}</div>
+            ` : ''}
+
+            ${nahlenaZavada ? `
+                <div style="margin-top: 15px; background-color: #ffeeeb; border-left: 4px solid var(--danger-color); padding: 10px; border-radius: 4px;">
+                    <strong style="color: var(--danger-color); font-size: 14px;">⚠️ NAHLÁŠENÁ ZÁVADA:</strong>
+                    <div style="margin-top: 5px; font-weight: bold; color: #1e293b; white-space: pre-wrap;">${nahlenaZavada}</div>
+                </div>
+            ` : ''}
+            
+            <div style="margin: 15px 0; border-bottom:3px double var(--primary-color);"></div>
+            <div class="detail-item" style="font-size:18px; font-weight:800; background:var(--primary-light); padding:8px; border-radius:6px;">
+                <span>K ODEVZDÁNÍ:</span><span class="plus">${kOdevzdani} Kč</span>
+            </div>
+        `;
+
+        document.getElementById('detailOverlay').style.display = 'block';
+    }
+
     function smazatZaznam(docId) {
-        if(confirm("Opravdu chcete tuto uzávěrku trvale smazat ze serveru?")) {
-            db.collection("uzaverky").doc(docId).delete().then(() => {
-                alert("Záznam byl smazán.");
-            });
+        const heslo = prompt("Pro smazání uzávěrky zadejte administrátorské heslo:");
+        if (heslo === null) return; 
+        
+        if (heslo === ADMIN_HESLO) {
+            db.collection("uzaverky").doc(docId).delete()
+              .then(() => alert("Záznam byl trvale smazán z databáze."))
+              .catch(err => alert("Chyba při mazání: " + err));
+        } else {
+            alert("Nesprávné administrátorské heslo! Záznam nebyl smazán.");
         }
     }
 
     function vykreslitEditaciAut() {
-        const body = document.getElementById('editCarsBody');
-        body.innerHTML = "";
-        auta.sort((a,b) => a.id - b.id).forEach((a, index) => {
-            body.innerHTML += `
+        const tbody = document.getElementById('editCarsBody');
+        tbody.innerHTML = "";
+        const serazenaAuta = [...auta].sort((a, b) => a.id - b.id);
+        serazenaAuta.forEach(a => {
+            tbody.innerHTML += `
                 <tr>
-                    <td><input type="text" class="edit-car-input" value="${a.nazev}" id="editNazev-${index}"></td>
-                    <td><input type="text" class="edit-car-input" value="${a.spz}" id="editSpz-${index}"></td>
-                    <td><input type="number" class="edit-car-input" value="${a.km}" id="editKm-${index}"></td>
-                </tr>`;
+                    <td><input type="text" class="edit-car-input" id="editCarName_${a.id}" value="${a.nazev}"></td>
+                    <td><input type="text" class="edit-car-input" id="editCarSpz_${a.id}" value="${a.spz}" style="font-weight:bold; text-transform:uppercase;"></td>
+                    <td><input type="number" class="edit-car-input" id="editCarKm_${a.id}" value="${a.km}" style="text-align: right;"></td>
+                </tr>
+            `;
         });
     }
 
     function ulozitZmenyAut() {
-        let noveSeznamAut = [];
-        auta.forEach((a, index) => {
-            noveSeznamAut.push({
+        const noveSeznam = auta.map(a => {
+            return {
                 id: a.id,
-                nazev: document.getElementById(`editNazev-${index}`).value.trim(),
-                spz: document.getElementById(`editSpz-${index}`).value.trim(),
-                km: parseInt(document.getElementById(`editKm-${index}`).value) || 0
-            });
+                nazev: document.getElementById(`editCarName_${a.id}`).value.trim(),
+                spz: document.getElementById(`editCarSpz_${a.id}`).value.trim().toUpperCase(),
+                km: parseInt(document.getElementById(`editCarKm_${a.id}`).value) || 0
+            };
         });
-        
-        db.collection("nastaveni").doc("auta").set({ seznam: noveSeznamAut }).then(() => {
-            alert("Změny ve vozovém parku byly uloženy na server!");
+
+        db.collection("nastaveni").doc("auta").set({ seznam: noveSeznam }).then(() => {
+            alert("Změny ve vozovém parku uloženy.");
             prepnout('sec-database');
         });
     }
 
+    function otevritKartuVozidla(autoId) {
+        aktivniKartaAutoId = autoId;
+        const auto = auta.find(a => a.id === autoId);
+        document.getElementById('carCardTitle').innerHTML = `🗂️ Karta vozidla: ${auto.nazev} <span class="spz-tag" style="font-size:15px; min-width:90px; padding:2px; margin-left:10px;">${auto.spz}</span>`;
+        
+        document.getElementById('repairDate').value = "";
+        document.getElementById('repairKm').value = "";
+        document.getElementById('repairText').value = "";
+        document.getElementById('repairPrice').value = "";
+
+        db.collection("karty_vozidel").doc(autoId.toString()).get().then((doc) => {
+            if (doc.exists) {
+                aktivniKartaData = doc.data();
+                if (!aktivniKartaData.naklady) aktivniKartaData.naklady = [];
+            } else {
+                aktivniKartaData = { vin: "", stk: "", znamka: "", revize: "", interval: "", poznamka: "", naklady: [] };
+            }
+            
+            document.getElementById('cardVin').value = aktivniKartaData.vin || "";
+            document.getElementById('cardStk').value = aktivniKartaData.stk || "";
+            document.getElementById('cardZnamka').value = aktivniKartaData.znamka || "";
+            document.getElementById('cardInterval').value = aktivniKartaData.interval || "";
+            document.getElementById('cardPoznamka').value = aktivniKartaData.poznamka || "";
+
+            document.getElementById('cardVin').readOnly = jeServisak;
+            document.getElementById('cardStk').readOnly = jeServisak;
+            document.getElementById('cardZnamka').readOnly = jeServisak;
+            document.getElementById('cardInterval').readOnly = false;
+            document.getElementById('cardPoznamka').readOnly = jeServisak;
+
+            const btnUlozitTech = document.getElementById('btnUlozitKartaTech');
+            if (btnUlozitTech) {
+                btnUlozitTech.style.display = 'block';
+            }
+
+            vykreslitNakladyKarty();
+            prepnout('sec-car-card-detail');
+        }).catch(err => alert("Chyba při načítání karty: " + err));
+    }
+
+    function otevritHistoriiZavad() {
+        const tbody = document.getElementById('zavadyKartyBody');
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const zavady = databaze.filter(d => parseInt(d.autoId) === parseInt(aktivniKartaAutoId) && d.zavada && d.zavada.trim() !== "");
+
+        if (zavady.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 15px;">Žádné nahlášené závady u tohoto vozidla.</td></tr>`;
+        } else {
+            zavady.sort((a, b) => (b.id || 0) - (a.id || 0));
+
+            zavady.forEach(z => {
+                let zobrazitDatum = z.datum || "";
+                if (zobrazitDatum.includes(",")) {
+                    zobrazitDatum = zobrazitDatum.split(",")[0].trim();
+                }
+
+                const akceBtn = jeServisak 
+                    ? `<span style="color:var(--text-muted); font-size:11px;">Pouze Admin</span>` 
+                    : `<button class="btn-delete" style="padding:3px 6px; font-size:11px;" onclick="smazatZavaduKarty('${z.docId}')">❌ Smazat</button>`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="nowrap">${zobrazitDatum}</td>
+                        <td><strong>${z.ridic || "Neznámý"}</strong></td>
+                        <td style="white-space: pre-wrap;">${z.zavada}</td>
+                        <td style="text-align:center;">${akceBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('zavadyOverlay').style.display = 'block';
+    }
+
+    function smazatZavaduKarty(docId) {
+        if (jeServisak) {
+            alert("Chyba: Záznamy o závadách může mazat pouze administrátor!");
+            return;
+        }
+
+        if (confirm("Opravdu si přejete smazat tento záznam o závadě z historie? Financialní uzávěrka zůstane zachována.")) {
+            db.collection("uzaverky").doc(docId).update({
+                zavada: ""
+            }).then(() => {
+                alert("Záznam o závadě byl úspěšně odstraněn.");
+                otevritHistoriiZavad();
+            }).catch(err => alert("Chyba při mazání závady: " + err));
+        }
+    }
+
+    function vykreslitNakladyKarty() {
+        const tbody = document.getElementById('cardRepairsBody');
+        tbody.innerHTML = "";
+        let celkem = 0;
+
+        const filterOd = document.getElementById('repairFilterOd') ? document.getElementById('repairFilterOd').value : '';
+        const filterDo = document.getElementById('repairFilterDo') ? document.getElementById('repairFilterDo').value : '';
+        const filterAutor = document.getElementById('repairFilterAutor') ? document.getElementById('repairFilterAutor').value : '';
+
+        const serazeneNaklady = [...aktivniKartaData.naklady].sort((a, b) => {
+            const dateCmp = b.datum.localeCompare(a.datum);
+            if (dateCmp !== 0) return dateCmp;
+            return b.id - a.id; 
+        });
+
+        serazeneNaklady.forEach(n => {
+            const zapsal = n.autor || 'admin';
+
+            if (filterOd && n.datum < filterOd) return;
+            if (filterDo && n.datum > filterDo) return;
+            if (filterAutor && zapsal !== filterAutor) return;
+
+            celkem += n.cena;
+            let zobrazitDatum = n.datum;
+            if(zobrazitDatum.includes("-")) {
+                const p = zobrazitDatum.split("-");
+                zobrazitDatum = `${p[2]}.${p[1]}.${p[0]}`;
+            }
+
+            const trClass = zapsal === 'servis' ? 'class="servisni-radek"' : '';
+
+            tbody.innerHTML += `
+                <tr ${trClass}>
+                    <td class="nowrap">${zobrazitDatum}</td>
+                    <td class="number-col">${n.km ? n.km + ' km' : '-'}</td>
+                    <td>${n.popis}</td>
+                    <td class="number-col minus">-${n.cena} Kč</td>
+                    <td style="text-align:center;">
+                        ${jeServisak ? '' : `<button class="btn-delete" style="padding:3px 6px; font-size:11px;" onclick="smazatNakladKarty(${n.id})">❌</button>`}
+                    </td>
+                </tr>
+            `;
+        });
+        document.getElementById('cardRepairsTotal').innerText = `-${celkem} Kč`;
+    }
+
+    function vynulovatFiltrOprav() {
+        if(document.getElementById('repairFilterOd')) document.getElementById('repairFilterOd').value = '';
+        if(document.getElementById('repairFilterDo')) document.getElementById('repairFilterDo').value = '';
+        if(document.getElementById('repairFilterAutor')) document.getElementById('repairFilterAutor').value = '';
+        vykreslitNakladyKarty();
+    }
+
+    function ulozitUdajeKarty() {
+        aktivniKartaData.vin = document.getElementById('cardVin').value.trim();
+        aktivniKartaData.stk = document.getElementById('cardStk').value;
+        aktivniKartaData.znamka = document.getElementById('cardZnamka').value;
+        aktivniKartaData.interval = parseInt(document.getElementById('cardInterval').value) || "";
+        aktivniKartaData.poznamka = document.getElementById('cardPoznamka').value.trim();
+        
+        if (jeServisak) {
+            if (prompt("Pro uložení servisního záznamu zadejte vaše heslo:") !== SERVIS_HESLO) {
+                alert("Chybné heslo! Údaje nebyly uloženy.");
+                return;
+            }
+        }
+        db.collection("karty_vozidel").doc(aktivniKartaAutoId.toString()).set(aktivniKartaData).then(() => {
+            alert("Technické údaje karty vozidla byly úspěšně uloženy.");
+        }).catch(err => alert("Chyba při ukládání údajů: " + err));
+    }
+
+    function pridatNakladKarty() {
+        const dat = document.getElementById('repairDate').value;
+        const km = parseInt(document.getElementById('repairKm').value) || 0;
+        const txt = document.getElementById('repairText').value.trim();
+        const pri = parseInt(document.getElementById('repairPrice').value) || 0;
+
+        if(!dat || !txt || pri <= 0) {
+            alert("Chyba: Musíte vyplnit korektní datum, popis opravy i cenu vyšší než 0 Kč!");
+            return;
+        }
+
+        if (jeServisak) {
+            if (prompt("Pro uložení servisního záznamu zadejte vaše heslo:") !== SERVIS_HESLO) {
+                alert("Zadali jste chybné heslo! Záznam nebyl uložen.");
+                return;
+            }
+        }
+
+        const novýNaklad = {
+            id: Date.now(),
+            datum: dat,
+            km: km,
+            popis: txt,
+            cena: pri,
+            autor: jeServisak ? 'servis' : 'admin'
+        };
+
+        aktivniKartaData.naklady.push(novýNaklad);
+        
+        db.collection("karty_vozidel").doc(aktivniKartaAutoId.toString()).set(aktivniKartaData).then(() => {
+            document.getElementById('repairDate').value = "";
+            document.getElementById('repairKm').value = "";
+            document.getElementById('repairText').value = "";
+            document.getElementById('repairPrice').value = "";
+            vykreslitNakladyKarty();
+        }).catch(err => alert("Chyba při zápisu nákladu: " + err));
+    }
+
+    function smazatNakladKarty(nakladId) {
+        if(confirm("Opravdu si přejete smazat tento náklad / opravu z historie?")) {
+            aktivniKartaData.naklady = aktivniKartaData.naklady.filter(n => n.id !== nakladId);
+            db.collection("karty_vozidel").doc(aktivniKartaAutoId.toString()).set(aktivniKartaData).then(() => {
+                vykreslitNakladyKarty();
+            }).catch(err => alert("Chyba při mazání nákladu: " + err));
+        }
+    }
+
     function nactiAdokresliRidice() {
-        const body = document.getElementById('editDriversBody');
-        if (!body) return;
-        body.innerHTML = "";
-        Object.keys(ridici).forEach(u => {
-            body.innerHTML += `
+        const tbody = document.getElementById('editDriversBody');
+        if(!tbody) return;
+        tbody.innerHTML = "";
+        
+        Object.keys(ridici).forEach(r => {
+            if(r === 'admin') return; 
+            tbody.innerHTML += `
                 <tr>
-                    <td><b>${u}</b></td>
-                    <td><input type="text" class="edit-car-input" value="${ridici[u]}" id="driverPass-${u}"></td>
-                    <td>${u !== 'admin' ? `<button class="btn-delete" onclick="adminSmazatRidice('${u}')">Smazat</button>` : '-'}</td>
-                </tr>`;
+                    <td><strong>${r}</strong></td>
+                    <td><input type="text" class="edit-car-input" id="editDriverPass_${r}" value="${ridici[r]}"></td>
+                    <td><button class="btn-delete" onclick="adminSmazatRidice('${r}')">SMAZAT</button></td>
+                </tr>
+            `;
         });
     }
 
@@ -1023,50 +1879,393 @@
         const p = document.getElementById('adminNewPass').value.trim();
         if(u && p) {
             ridici[u] = p;
-            db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
-                document.getElementById('adminNewUser').value = "";
-                document.getElementById('adminNewPass').value = "";
-                alert(`Řidič ${u} přidán.`);
-            });
-        } else alert("Vyplňte jméno a heslo!");
+            document.getElementById('adminNewUser').value = "";
+            document.getElementById('adminNewPass').value = "";
+            nactiAdokresliRidice();
+        } else alert("Vyplňte jméno i heslo!");
     }
 
-    function adminSmazatRidice(uzivatel) {
-        if(confirm(`Opravdu chcete smazat řidiče "${uzivatel}"?`)) {
-            delete ridici[uzivatel];
-            db.collection("nastaveni").doc("ridici").set(ridici);
+    function adminSmazatRidice(r) {
+        if(confirm(`Smazat řidiče "${r}"?`)) {
+            delete ridici[r];
+            nactiAdokresliRidice();
         }
     }
 
     function ulozitZmenyRidicu() {
-        Object.keys(ridici).forEach(u => {
-            const novýPass = document.getElementById(`driverPass-${u}`).value.trim();
-            if(novýPass) ridici[u] = novýPass;
+        Object.keys(ridici).forEach(r => {
+            if(r === 'admin') return;
+            const el = document.getElementById(`editDriverPass_${r}`);
+            if(el) ridici[r] = el.value.trim();
         });
-        
+
         db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
-            alert("Hesla řidičů byla úspěšně aktualizována!");
+            alert("Změny řidičů úspěšně uloženy.");
             prepnout('sec-database');
         });
     }
 
     function exportToCSV() {
-        if(databaze.length === 0) { alert("Žádná data k exportu."); return; }
-        let csv = "\uFEFFDatum a čas;Řidič;Vozidlo;Obálka;Km Start;Km Cíl;Odečet Km;Celkem Km;Učtované Km;Tržba;Litrů;Cena Tank;Km Pumpa;Spotřeba;Celkem Výdaje;K Odevzdání\n";
+        const heslo = prompt("Pro stažení CSV exportu zadejte administrátorské heslo:");
+        if (heslo === null) return;
+        if (heslo !== ADMIN_HESLO) { alert("Nesprávné heslo! Export zrušen."); return; }
+
+        if(databaze.length === 0) { alert("Žádaná data k exportu!"); return; }
         
-        let filtrovano = [...databaze].sort((a,b) => b.id - a.id);
+        let csvContent = "\uFEFF"; 
+        // Přidán sloupec pro polohu GPS i do exportu (volitelné)
+        csvContent += "Stav;Datum a cas;Ridic;Vozidlo;SPZ;Obalka;GPS Poloha;Ujeto celkem (km);Km Start;Km Cil;Odecet km;Trzba (Kce);Litru;Cena Tankovani;Km Pumpa;Vydaje Nadrazaci;Vydaje Ostatni;Poznamka;K odevzdani (Kce)\r\n";
         
-        filtrovano.forEach(z => {
-            csv += `"${z.datum}";"${z.ridic}";"${z.auto}";"${z.obalka || '-'}";${z.kmStart};${z.kmEnd};${z.kmOdecet};${z.kmNajeto};${z.kmUctovane};${z.trzba};${z.tankLitry};${z.tankCena};${z.tankKm};"${z.spotreba || '-'}";${z.vydaje};${z.kOdevzdani}\n`;
+        const exportniSerazena = [...databaze].sort((a, b) => {
+            const idA = a.id || 0;
+            const idB = b.id || 0;
+            if (idA !== idB) return idB - idA;
+            return (b.datum || "").localeCompare(a.datum || "");
         });
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        exportniSerazena.forEach(d => {
+            const kmStart = d.kmStart !== undefined ? parseInt(d.kmStart) : 0;
+            const kmCil = d.kmCil !== undefined ? parseInt(d.kmCil) : 0;
+            const odpocetKm = d.odpocetKm !== undefined ? parseInt(d.odpocetKm) : 0;
+            
+            let ujetoCelkem = d.ujetoCelkem !== undefined ? parseInt(d.ujetoCelkem) : 0;
+            if(ujetoCelkem === 0 && kmCil > kmStart) ujetoCelkem = kmCil - kmStart;
+            
+            const cisteKm = Math.max(0, ujetoCelkem - odpocetKm);
+            let trzbaBrutto = d.trzbaBrutto !== undefined ? parseInt(d.trzbaBrutto) : 0;
+            if (trzbaBrutto === 0 && cisteKm > 0) trzbaBrutto = cisteKm * SAZBA;
+            
+            let gpsStr = (d.gpsLat && d.gpsLng) ? `${d.gpsLat},${d.gpsLng}` : '';
+
+            let řádek = [
+                d.zkontrolovano ? 'Zkontrolovano' : 'Nezkontrolovano',
+                d.datum || '', d.ridic || '', d.autoNazev || '', d.autoSpz || '', d.obalka || '',
+                gpsStr, ujetoCelkem, kmStart, kmCil, odpocetKm, trzbaBrutto,
+                d.fuelLitry !== undefined ? d.fuelLitry : 0, d.fuelCena !== undefined ? d.fuelCena : 0, d.fuelKm !== undefined ? d.fuelKm : 0, 
+                d.vydajeNazdrazaci !== undefined ? d.vydajeNazdrazaci : 0, d.vydajeOstatni !== undefined ? d.vydajeOstatni : 0,
+                `"${(d.vydajePoznamka || '').replace(/"/g, '""')}"`, d.kOdevzdani !== undefined ? d.kOdevzdani : 0
+            ];
+            csvContent += řádek.join(";") + "\r\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `Uzaverky_GreenTaxi_${new Date().toLocaleDateString('cs-CZ')}.csv`);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `GreenTaxi_Export_${new Date().toLocaleDateString('cs-CZ')}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    function vyvolatImportCSV() {
+        document.getElementById('csvFileInput').click();
+    }
+
+    function zprocessedImportCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const heslo = prompt("Pro import dat z CSV souboru zadejte administrátorské heslo:");
+        
+        if (heslo === null) {
+            event.target.value = ""; 
+            return;
+        }
+        if (heslo !== ADMIN_HESLO) { 
+            alert("Nesprávné heslo! Import zrušen."); 
+            event.target.value = ""; 
+            return; 
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const lines = text.split(/\r?\n/);
+            
+            if (lines.length <= 1) { alert("Soubor je prázdný nebo neobsahuje data!"); return; }
+            
+            if (!lines[0].includes("Datum a cas") && !lines[0].includes("Ridic")) {
+                alert("Vybraný soubor pravděpodobně nemá správný formát struktury Green Taxi!");
+                return;
+            }
+
+            let uspesnePridano = 0;
+            let preskoceno = 0;
+            
+            // Zjištění zda CSV obsahuje sloupec s GPS
+            const hasGPSCol = lines[0].includes("GPS Poloha");
+            const shiftIdx = hasGPSCol ? 1 : 0;
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) { preskoceno++; continue; }
+
+                let parts = [];
+                let insideQuotes = false;
+                let currentPart = "";
+
+                for (let c = 0; c < line.length; c++) {
+                    const char = line[c];
+                    if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (char === ';' && !insideQuotes) {
+                        parts.push(currentPart);
+                        currentPart = "";
+                    } else {
+                        currentPart += char;
+                    }
+                }
+                parts.push(currentPart);
+
+                if (parts.length < (18 + shiftIdx)) { preskoceno++; continue; }
+
+                const d_stav = parts[0];
+                const d_datum = parts[1];
+                const d_ridic = parts[2];
+                const d_autoNazev = parts[3];
+                const d_autoSpz = parts[4];
+                const d_obalka = parts[5];
+                
+                let d_gpsLat = null;
+                let d_gpsLng = null;
+                if (hasGPSCol && parts[6]) {
+                    const coords = parts[6].split(',');
+                    if (coords.length === 2) {
+                        d_gpsLat = parseFloat(coords[0]);
+                        d_gpsLng = parseFloat(coords[1]);
+                    }
+                }
+
+                const d_ujetoCelkem = parseInt(parts[6 + shiftIdx]) || 0;
+                const d_kmStart = parseInt(parts[7 + shiftIdx]) || 0;
+                const d_kmCil = parseInt(parts[8 + shiftIdx]) || 0;
+                const d_odpocetKm = parseInt(parts[9 + shiftIdx]) || 0;
+                const d_trzbaBrutto = parseInt(parts[10 + shiftIdx]) || 0;
+                const d_fuelLitry = parseFloat(parts[11 + shiftIdx]) || 0;
+                const d_fuelCena = parseInt(parts[12 + shiftIdx]) || 0;
+                const d_fuelKm = parseInt(parts[13 + shiftIdx]) || 0;
+                const d_vydajeNazdrazaci = parseInt(parts[14 + shiftIdx]) || 0;
+                const d_vydajeOstatni = parseInt(parts[15 + shiftIdx]) || 0;
+                const d_vydajePoznamka = parts[16 + shiftIdx];
+                const d_kOdevzdani = parseInt(parts[17 + shiftIdx]) || 0;
+
+                const vygenerovaneId = Date.now() + i;
+
+                const importovanyZaznam = {
+                    id: vygenerovaneId,
+                    datum: d_datum,
+                    ridic: d_ridic,
+                    autoId: 0, 
+                    autoNazev: d_autoNazev,
+                    autoSpz: d_autoSpz,
+                    obalka: d_obalka,
+                    gpsLat: d_gpsLat,
+                    gpsLng: d_gpsLng,
+                    kmStart: d_kmStart,
+                    kmCil: d_kmCil,
+                    ujetoCelkem: d_ujetoCelkem,
+                    odpocetKm: d_odpocetKm,
+                    cisteKm: Math.max(0, d_ujetoCelkem - d_odpocetKm),
+                    trzbaBrutto: d_trzbaBrutto,
+                    fuelCena: d_fuelCena,
+                    fuelLitry: d_fuelLitry,
+                    fuelKm: d_fuelKm,
+                    vydajeNazdrazaci: d_vydajeNazdrazaci,
+                    vydajeOstatni: d_vydajeOstatni,
+                    vydajePoznamka: d_vydajePoznamka,
+                    celkoveVydaje: d_fuelCena + d_vydajeNazdrazaci + d_vydajeOstatni,
+                    kOdevzdani: d_kOdevzdani,
+                    zkontrolovano: d_stav === "Zkontrolovano" ? true : false
+                };
+
+                db.collection("uzaverky").add(importovanyZaznam);
+                uspesnePridano++;
+            }
+
+            alert(`Import úspěšně dokončen!\nNahráno položek: ${uspesnePridano}\nVynecháno řádků: ${preskoceno}`);
+            document.getElementById('csvFileInput').value = "";
+        };
+        reader.readAsText(file);
+    }
+
+    function zkontrolovatBliziciSeSTK() {
+        db.collection("karty_vozidel").get().then((querySnapshot) => {
+            const dnes = new Date();
+            dnes.setHours(0, 0, 0, 0);
+            
+            const zaSedmDni = new Date();
+            zaSedmDni.setDate(dnes.getDate() + 7);
+            zaSedmDni.setHours(23, 59, 59, 999);
+            
+            let autaSBliziciSeSTK = [];
+            let autaSPropadlouSTK = [];
+            let autaSBliziciSeZnamkou = [];
+            let autaSPropadlouZnamkou = [];
+            let autaBliziciSeOlej = [];
+            let autaPropadlyOlej = [];
+            let autaSeZavadou = [];
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const autoId = doc.id;
+                
+                const carObj = auta.find(a => a.id.toString() === autoId);
+                const nazevAuta = carObj ? `${carObj.nazev} (${carObj.spz})` : `Vůz ID ${autoId}`;
+                
+                if (data.stk && data.stk.trim() !== "") {
+                    const parts = data.stk.split('-');
+                    if (parts.length === 3) {
+                        const datumSTK = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        if (!isNaN(datumSTK.getTime())) {
+                            const zformatovaneDatum = datumSTK.toLocaleDateString('cs-CZ');
+                            if (datumSTK < dnes) {
+                                autaSPropadlouSTK.push(`• ${nazevAuta} (PROPADLA: ${zformatovaneDatum})`);
+                            } else if (datumSTK <= zaSedmDni) {
+                                autaSBliziciSeSTK.push(`• ${nazevAuta} (končí: ${zformatovaneDatum})`);
+                            }
+                        }
+                    }
+                }
+
+                if (data.znamka && data.znamka.trim() !== "") {
+                    const partsZ = data.znamka.split('-');
+                    if (partsZ.length === 3) {
+                        const datumZnamka = new Date(parseInt(partsZ[0]), parseInt(partsZ[1]) - 1, parseInt(partsZ[2]));
+                        if (!isNaN(datumZnamka.getTime())) {
+                            const zformatovaneDatumZ = datumZnamka.toLocaleDateString('cs-CZ');
+                            if (datumZnamka < dnes) {
+                                autaSPropadlouZnamkou.push(`• ${nazevAuta} (PROPADLA: ${zformatovaneDatumZ})`);
+                            } else if (datumZnamka <= zaSedmDni) {
+                                autaSBliziciSeZnamkou.push(`• ${nazevAuta} (končí: ${zformatovaneDatumZ})`);
+                            }
+                        }
+                    }
+                }
+            
+                let nejnovejsiZavadyAut = {};
+                
+                databaze.forEach(zaznam => {
+                    if (zaznam.zavada && zaznam.zavada.trim() !== "") {
+                        let klicAuta = zaznam.autoSpz || zaznam.autoNazev;
+                        if (!nejnovejsiZavadyAut[klicAuta] || (zaznam.id && nejnovejsiZavadyAut[klicAuta].id && zaznam.id > nejnovejsiZavadyAut[klicAuta].id)) {
+                            nejnovejsiZavadyAut[klicAuta] = zaznam;
+                        }
+                    }
+                });
+
+                Object.values(nejnovejsiZavadyAut).forEach(zaznam => {
+                    if (!zaznam.zkontrolovano) {
+                        const textZavady = `• ${zaznam.autoNazev} (${zaznam.autoSpz}) - nahlásil(a) ${zaznam.ridic}:\n  "${zaznam.zavada}"`;
+                        if (!autaSeZavadou.includes(textZavady)) {
+                            autaSeZavadou.push(textZavady);
+                        }
+                    }
+                });
+
+                if (data.interval && data.interval !== "") {
+                    const targetKm = parseInt(data.interval); 
+                    
+                    if (carObj && !isNaN(targetKm) && targetKm > 0) {
+                        const currentKm = parseInt(carObj.km) || 0; 
+                        const zbyvaKm = targetKm - currentKm;
+                        
+                        if (zbyvaKm < 0) {
+                            autaPropadlyOlej.push(`• ${nazevAuta} (PŘEJETO O: ${Math.abs(zbyvaKm)} km! Mělo být při ${targetKm} km)`);
+                        } else if (zbyvaKm <= 1000) {
+                            autaBliziciSeOlej.push(`• ${nazevAuta} (zbývá: ${zbyvaKm} km, výměna při ${targetKm} km)`);
+                        }
+                    }
+                }
+            });
+            
+            function prehrajPipnuti() {
+                try {
+                    let AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    let audioCtx = new AudioContext();
+                    let oscillator = audioCtx.createOscillator();
+                    let gainNode = audioCtx.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.type = 'sine';          
+                    oscillator.frequency.value = 800;  
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); 
+                    
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.15); 
+                } catch (zvukChyba) {
+                    console.warn("Prohlížeč zablokoval automatické přehrání zvuku:", zvukChyba);
+                }
+            }
+
+            let zprava = "";
+                
+            if (autaSPropadlouSTK.length > 0) zprava += "🚨 PROPADLÁ STK:\n" + autaSPropadlouSTK.join("\n") + "\n\n";
+            if (autaSBliziciSeSTK.length > 0) zprava += "⏳ STK KONČÍ DO 7 DNÍ:\n" + autaSBliziciSeSTK.join("\n") + "\n\n";
+                
+            if (autaSPropadlouZnamkou.length > 0) zprava += "🚨 PROPADLÁ DÁLNIČNÍ ZNÁMKA:\n" + autaSPropadlouZnamkou.join("\n") + "\n\n";
+            if (autaSBliziciSeZnamkou.length > 0) zprava += "🎫 DÁLNIČNÍ ZNÁMKA KONČÍ DO 7 DNÍ:\n" + autaSBliziciSeZnamkou.join("\n") + "\n\n";
+                
+            if (autaPropadlyOlej.length > 0) zprava += "🚨 PŘEJETÝ INTERVAL OLEJE:\n" + autaPropadlyOlej.join("\n") + "\n\n";
+            if (autaBliziciSeOlej.length > 0) zprava += "🛢️ VÝMĚNA OLEJE DO 1000 KM:\n" + autaBliziciSeOlej.join("\n") + "\n\n";
+            
+            if (autaSeZavadou.length > 0) zprava += "🔧 NAHLÁŠENÉ ZÁVADY:\n" + autaSeZavadou.join("\n") + "\n\n";    
+
+            if (zprava !== "") {
+                try {
+                    prehrajPipnuti();
+                } catch (zvukovaChyba) {
+                    console.error("Nepodařilo se spustit funkci pípnutí:", zvukovaChyba);
+                }
+                    
+                setTimeout(function() {
+                    alert("⚠️ UPOZORNĚNÍ PRO ADMINISTRÁTORA:\n\n" + zprava.trim());
+                }, 100);
+            }
+        }).catch((error) => {
+            console.error("Chyba při kontrole hlídačů (STK, známky, olej): ", error);
+        }); 
+    }
+
+    function ulozitHesloServisu() {
+        const noveHeslo = document.getElementById('adminServicePass').value.trim();
+        if (!noveHeslo) {
+            alert("Heslo servisu nesmí být prázdné!");
+            return;
+        }
+        
+        db.collection("nastaveni").doc("servis").set({
+            heslo: noveHeslo
+        }).then(() => {
+            alert("Heslo pro tlačítko SERVIS bylo úspěšně změněno v databázi.");
+        }).catch((error) => {
+            console.error("Chyba při ukládání hesla: ", error);
+            alert("Chyba: Heslo se nepodařilo uložit.");
+        });
+    }
+
+    function zkontrolovatSTK() {
+        const dnes = new Date();
+        const limit = new Date();
+        limit.setDate(dnes.getDate() + 7);
+
+        let varovani = [];
+        
+        auta.forEach(auto => {
+            if (auto.stkDatum) {
+                const datumSTK = new Date(auto.stkDatum);
+                if (datumSTK <= limit && datumSTK >= dnes) {
+                    varovani.push(`- ${auto.nazev} (${auto.spz}): ${auto.stkDatum}`);
+                }
+            }
+        });
+
+        if (varovani.length > 0) {
+            alert("⚠️ POZOR! U následujících vozidel končí STK do 7 dnů:\n\n" + varovani.join("\n"));
+        }
     }
 </script>
 </body>
