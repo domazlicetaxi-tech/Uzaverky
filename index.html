@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Green Taxi">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Green Taxi Domažlice - Uzávěrky v5.9.9</title>
+    <title>Green Taxi Domažlice - Uzávěrky v6.0.0</title>
     <style>
         :root {
             --primary-color: #2e7d32; 
@@ -1644,6 +1644,7 @@
         const vydajePoznamka = item.vydajePoznamka || "";
         const kOdevzdani = item.kOdevzdani !== undefined ? item.kOdevzdani : 0;
         const nahlenaZavada = item.zavada || "";
+        const zavadaVyresena = item.zavadaVyresena || false;
         
         document.getElementById('detailFixedHeader').innerHTML = `
             <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px; margin-bottom:5px;">
@@ -1683,8 +1684,10 @@
             ` : ''}
 
             ${nahlenaZavada ? `
-                <div style="margin-top: 15px; background-color: #ffeeeb; border-left: 4px solid var(--danger-color); padding: 10px; border-radius: 4px;">
-                    <strong style="color: var(--danger-color); font-size: 14px;">⚠️ NAHLÁŠENÁ ZÁVADA:</strong>
+                <div style="margin-top: 15px; background-color: ${zavadaVyresena ? '#dcfce7' : '#ffeeeb'}; border-left: 4px solid ${zavadaVyresena ? 'var(--primary-color)' : 'var(--danger-color)'}; padding: 10px; border-radius: 4px;">
+                    <strong style="color: ${zavadaVyresena ? 'var(--primary-color)' : 'var(--danger-color)'}; font-size: 14px;">
+                        ${zavadaVyresena ? '✔️ VYŘEŠENÁ ZÁVADA:' : '⚠️ NAHLÁŠENÁ ZÁVADA:'}
+                    </strong>
                     <div style="margin-top: 5px; font-weight: bold; color: #1e293b; white-space: pre-wrap;">${nahlenaZavada}</div>
                 </div>
             ` : ''}
@@ -1800,22 +1803,53 @@
                     zobrazitDatum = zobrazitDatum.split(",")[0].trim();
                 }
 
-                const akceBtn = jeServisak 
-                    ? `<span style="color:var(--text-muted); font-size:11px;">Pouze Admin</span>` 
-                    : `<button class="btn-delete" style="padding:3px 6px; font-size:11px;" onclick="smazatZavaduKarty('${z.docId}')">❌ Smazat</button>`;
+                let akceBtn = '';
+                if (jeServisak) {
+                    akceBtn = `<span style="color:var(--text-muted); font-size:11px;">Pouze Admin</span>`;
+                } else {
+                    if (z.zavadaVyresena) {
+                        akceBtn = `
+                            <div style="font-size:11px; color:#15803d; font-weight:bold; margin-bottom:5px;">✔️ Vyřešeno<br>${z.zavadaVyresenaDatum}</div>
+                            <button class="btn-delete" style="padding:3px 6px; font-size:11px;" onclick="smazatZavaduKarty('${z.docId}')">SMAZAT</button>
+                        `;
+                    } else {
+                        akceBtn = `
+                            <button style="padding:4px 8px; font-size:11px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; margin-bottom:4px; font-weight:bold; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="vyresitZavaduKarty('${z.docId}')">❌ Vyřešit</button>
+                            <br>
+                            <button class="btn-delete" style="padding:3px 6px; font-size:11px; width: 100%;" onclick="smazatZavaduKarty('${z.docId}')">SMAZAT</button>
+                        `;
+                    }
+                }
+
+                const trBg = z.zavadaVyresena ? 'background-color: #dcfce7;' : '';
 
                 tbody.innerHTML += `
-                    <tr>
+                    <tr style="${trBg}">
                         <td class="nowrap">${zobrazitDatum}</td>
                         <td><strong>${z.ridic || "Neznámý"}</strong></td>
                         <td style="white-space: pre-wrap;">${z.zavada}</td>
-                        <td style="text-align:center;">${akceBtn}</td>
+                        <td style="text-align:center; vertical-align: middle;">${akceBtn}</td>
                     </tr>
                 `;
             });
         }
 
         document.getElementById('zavadyOverlay').style.display = 'block';
+    }
+
+    function vyresitZavaduKarty(docId) {
+        if (jeServisak) {
+            alert("Chyba: Závady může řešit pouze administrátor!");
+            return;
+        }
+
+        const dnes = new Date().toLocaleDateString("cs-CZ");
+        db.collection("uzaverky").doc(docId).update({
+            zavadaVyresena: true,
+            zavadaVyresenaDatum: dnes
+        }).then(() => {
+            // O překreslení se postará onSnapshot listener z databáze, který automaticky zavolá otevritHistoriiZavad()
+        }).catch(err => alert("Chyba při označování závady za vyřešenou: " + err));
     }
 
     function smazatZavaduKarty(docId) {
@@ -1826,7 +1860,9 @@
 
         if (confirm("Opravdu si přejete smazat tento záznam o závadě z historie? Financialní uzávěrka zůstane zachována.")) {
             db.collection("uzaverky").doc(docId).update({
-                zavada: ""
+                zavada: "",
+                zavadaVyresena: firebase.firestore.FieldValue.delete(),
+                zavadaVyresenaDatum: firebase.firestore.FieldValue.delete()
             }).then(() => {
                 alert("Záznam o závadě byl úspěšně odstraněn.");
                 otevritHistoriiZavad();
@@ -2386,7 +2422,7 @@
                 });
 
                 Object.values(nejnovejsiZavadyAut).forEach(zaznam => {
-                    if (!zaznam.zkontrolovano) {
+                    if (!zaznam.zavadaVyresena) { // <-- ZMĚNA: bere v potaz nový status závady
                         const textZavady = `• ${zaznam.autoNazev} (${zaznam.autoSpz}) - nahlásil(a) ${zaznam.ridic}:\n  "${zaznam.zavada}"`;
                         if (!autaSeZavadou.includes(textZavady)) {
                             autaSeZavadou.push(textZavady);
