@@ -533,9 +533,18 @@
         <input type="text" id="logUser" placeholder="Uživatelské jméno" autocomplete="username">
         <input type="password" id="logPass" placeholder="Heslo" autocomplete="current-password">
         <div class="nav-buttons">
-            <button onclick="prihlasit()">VSTOUPIT DO SYSTÉMU</button>
+            <button onclick="prihlasit()">PŘIHLÁSIT SE</button>
             <button class="secondary-btn" onclick="vstoupitAdmin()">REGISTRACE (ADMIN)</button>
             <button class="secondary-btn" style="background-color: #f59e0b; color: white;" onclick="vstoupitServis()">🔧 SERVIS</button>
+        </div>
+    </div>
+
+    <div id="sec-enter" class="box">
+        <div id="welcomeUserEnter" style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 15px; color: var(--primary-color);"></div>
+        
+        <div class="nav-buttons">
+            <button id="btnVstoupit" onclick="potvrditStartApolohu()" style="padding: 20px; font-size: 18px;">📍 VSTOUPIT DO SYSTÉMU</button>
+            <button class="secondary-btn" onclick="odhlasit()">PŘIHLÁSIT SE JAKO JINÝ UŽIVATEL</button>
         </div>
     </div>
 
@@ -1001,10 +1010,11 @@
         db.collection("nastaveni").doc("auta").onSnapshot((doc) => {
             if (doc.exists) auta = doc.data().seznam || defaultAuta;
             else db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
+            
+            // TADY JE ZMĚNA: i při automatickém přihlášení jdeme na mezikrok sec-enter
             if (prihlasenyUzivatel) { 
-                prepnout('sec-fleet'); 
-                document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
-                vykreslitAuta(); 
+                document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
+                prepnout('sec-enter'); 
             } else { 
                 prepnout('sec-login'); 
             }
@@ -1104,61 +1114,64 @@
             prihlasenyUzivatel = u; 
             localStorage.setItem('taxi_user', u);
             
-            // Okamžité přepnutí na fleet (aby řidič nemusel čekat na vyřešení GPS)
-            prepnout('sec-fleet');
-            document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
-            vykreslitAuta();
-            
-            // Asynchronní zjištění polohy (pokud nejde o admina) a uložení do DB logů
-            if (u === "admin") {
-                db.collection("logy_prihlaseni").add({
-                    ridic: u,
-                    datum: new Date().toLocaleString("cs-CZ"),
-                    timestamp: Date.now(),
-                    gpsLat: null,
-                    gpsLng: null
-                }).catch(err => console.error("Chyba logování přihlášení: ", err));
-                
-                zkontrolovatBliziciSeSTK();
-            } else {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => { 
-                            // Poloha úspěšně získána
-                            db.collection("logy_prihlaseni").add({
-                                ridic: u,
-                                datum: new Date().toLocaleString("cs-CZ"),
-                                timestamp: Date.now(),
-                                gpsLat: pos.coords.latitude,
-                                gpsLng: pos.coords.longitude
-                            }).catch(err => console.error("Chyba logování přihlášení: ", err));
-                        },
-                        (err) => { 
-                            // Poloha zamítnuta nebo se nezdařila
-                            console.warn("Uživatel polohu zatím nepovolil nebo došlo k chybě.", err); 
-                            db.collection("logy_prihlaseni").add({
-                                ridic: u,
-                                datum: new Date().toLocaleString("cs-CZ"),
-                                timestamp: Date.now(),
-                                gpsLat: null,
-                                gpsLng: null
-                            }).catch(err => console.error("Chyba logování přihlášení: ", err));
-                        },
-                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                    );
-                } else {
-                    // Zařízení nepodporuje geolokaci
-                    db.collection("logy_prihlaseni").add({
-                        ridic: u,
-                        datum: new Date().toLocaleString("cs-CZ"),
-                        timestamp: Date.now(),
-                        gpsLat: null,
-                        gpsLng: null
-                    }).catch(err => console.error("Chyba logování přihlášení: ", err));
-                }
-            }
+            // Po úspěšném loginu jdeme pouze na mezikrok, aby kliknul na "Vstoupit do systému"
+            document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
+            prepnout('sec-enter');
             
         } else alert("Neplatné přihlašovací údaje!");
+    }
+
+    // NOVÁ FUNKCE PRO START A ZÁZNAM POLOHY
+    function potvrditStartApolohu() {
+        const btn = document.getElementById('btnVstoupit');
+        const puvodniText = btn.innerHTML;
+        btn.innerHTML = "ZÍSKÁVÁM POLOHU...";
+        btn.disabled = true;
+
+        const pokracovat = (lat, lng) => {
+            db.collection("logy_prihlaseni").add({
+                ridic: prihlasenyUzivatel,
+                datum: new Date().toLocaleString("cs-CZ"),
+                timestamp: Date.now(),
+                gpsLat: lat,
+                gpsLng: lng
+            }).then(() => {
+                btn.innerHTML = puvodniText;
+                btn.disabled = false;
+                
+                document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
+                prepnout('sec-fleet');
+                vykreslitAuta();
+            }).catch(err => {
+                console.error("Chyba logování přihlášení: ", err);
+                btn.innerHTML = puvodniText;
+                btn.disabled = false;
+                
+                document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
+                prepnout('sec-fleet');
+                vykreslitAuta();
+            });
+        };
+
+        if (prihlasenyUzivatel === "admin") {
+            zkontrolovatBliziciSeSTK();
+            pokracovat(null, null); // Adminovi se poloha neukládá
+        } else {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { 
+                        pokracovat(pos.coords.latitude, pos.coords.longitude); 
+                    },
+                    (err) => { 
+                        console.warn("Poloha zamítnuta nebo nedostupná.", err); 
+                        pokracovat(null, null); // Pusť dál i bez polohy
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                pokracovat(null, null); // Zařízení nepodporuje geolokaci
+            }
+        }
     }
 
     function odhlasit() { localStorage.removeItem('taxi_user'); location.reload(); }
