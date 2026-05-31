@@ -1011,7 +1011,6 @@
             if (doc.exists) auta = doc.data().seznam || defaultAuta;
             else db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
             
-            // TADY JE ZMĚNA: i při automatickém přihlášení jdeme na mezikrok sec-enter
             if (prihlasenyUzivatel) { 
                 document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
                 prepnout('sec-enter'); 
@@ -1114,18 +1113,14 @@
             prihlasenyUzivatel = u; 
             localStorage.setItem('taxi_user', u);
             
-            // Po úspěšném loginu jdeme pouze na mezikrok, aby kliknul na "Vstoupit do systému"
             document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
             prepnout('sec-enter');
             
         } else alert("Neplatné přihlašovací údaje!");
     }
 
-    // NOVÁ FUNKCE PRO START A ZÁZNAM POLOHY
     function potvrditStartApolohu() {
         const btn = document.getElementById('btnVstoupit');
-        const puvodniText = btn.innerHTML;
-        btn.innerHTML = "ČEKEJTE PRACUJI...";
         btn.disabled = true;
 
         const pokracovat = (lat, lng) => {
@@ -1136,7 +1131,6 @@
                 gpsLat: lat,
                 gpsLng: lng
             }).then(() => {
-                btn.innerHTML = puvodniText;
                 btn.disabled = false;
                 
                 document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
@@ -1144,7 +1138,6 @@
                 vykreslitAuta();
             }).catch(err => {
                 console.error("Chyba logování přihlášení: ", err);
-                btn.innerHTML = puvodniText;
                 btn.disabled = false;
                 
                 document.getElementById('welcomeUser').innerText = "👤 " + prihlasenyUzivatel;
@@ -1155,7 +1148,7 @@
 
         if (prihlasenyUzivatel === "admin") {
             zkontrolovatBliziciSeSTK();
-            pokracovat(null, null); // Adminovi se poloha neukládá
+            pokracovat(null, null); 
         } else {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -1164,12 +1157,12 @@
                     },
                     (err) => { 
                         console.warn("Poloha zamítnuta nebo nedostupná.", err); 
-                        pokracovat(null, null); // Pusť dál i bez polohy
+                        pokracovat(null, null); 
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                pokracovat(null, null); // Zařízení nepodporuje geolokaci
+                pokracovat(null, null); 
             }
         }
     }
@@ -1184,6 +1177,29 @@
     function vstoupitServis() {
         if (prompt("Zadejte heslo pro vstup do servisu:") === SERVIS_HESLO) {
             jeServisak = true;
+            
+            // --- NOVÉ: Záznam do historie přihlášení pro Servis ---
+            const ulozLogServisu = (lat, lng) => {
+                db.collection("logy_prihlaseni").add({
+                    ridic: "SERVIS",
+                    datum: new Date().toLocaleString("cs-CZ"),
+                    timestamp: Date.now(),
+                    gpsLat: lat,
+                    gpsLng: lng
+                }).catch(err => console.error("Chyba logování servisu: ", err));
+            };
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => ulozLogServisu(pos.coords.latitude, pos.coords.longitude),
+                    (err) => ulozLogServisu(null, null),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                ulozLogServisu(null, null);
+            }
+            // --------------------------------------------------------
+
             prepnout('sec-fleet-cards'); 
             
             const btnBackCards = document.querySelector('#sec-fleet-cards .btn-back-cards');
@@ -1379,7 +1395,7 @@
 
             if (navigator.geolocation && prihlasenyUzivatel !== 'admin') {
                 if(btnElement) {
-                    btnElement.innerText = "ČEKEJTE PRACUJI...";
+                    btnElement.innerText = "ZÍSKÁVÁM POLOHU...";
                     btnElement.disabled = true;
                 }
                 
