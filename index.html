@@ -910,6 +910,10 @@
                                 <option value="servis">Servis</option>
                             </select>
                         </div>
+                        <div style="flex: 2; min-width: 140px;">
+                            <label style="margin:0; font-size: 11px; font-weight: bold; color: var(--text-muted);">🔍 Vyhledat v opravách:</label>
+                            <input type="text" id="repairFilterText" placeholder="Zadejte hledaná slova..." style="margin:2px 0 0 0; padding:6px; font-size: 13px;" oninput="vykreslitNakladyKarty()">
+                        </div>
                         <button class="secondary-btn" onclick="vynulovatFiltrOprav()" style="margin:0; padding:7px 12px; font-size:12px; background: var(--secondary-color); width: auto;">❌</button>
                     </div>
                 </div>
@@ -1111,6 +1115,9 @@
     }
 
     window.onload = () => {
+        // Zobrazení login sekce okamžitě pro zamezení záseku na čisté stránce
+        prepnout(prihlasenyUzivatel ? 'sec-enter' : 'sec-login');
+
         db.collection("nastaveni").doc("servis").onSnapshot((doc) => {
             if (doc.exists && doc.data().heslo) {
                 SERVIS_HESLO = doc.data().heslo;
@@ -1160,7 +1167,7 @@
             document.getElementById('adminServicePass').value = SERVIS_HESLO;
         }
         if(id === 'sec-database') { nactiFiltryVArchivu(); vykreslitDatabazi(); }
-        if(id === 'sec-fleet-cards') vykreslitRozcestnikKaret();
+        if(id === 'sec-fleet-cards') vykreslitRozcestnikKaret(); // PŮVODNÍ CHYBA (MEZERA) OPRAVENA ZDE
         if(id === 'sec-login-logs') nactiAvykresliLogy();
         
         if(vybraneAuto) {
@@ -1992,6 +1999,10 @@
         const filterOd = document.getElementById('repairFilterOd') ? document.getElementById('repairFilterOd').value : '';
         const filterDo = document.getElementById('repairFilterDo') ? document.getElementById('repairFilterDo').value : '';
         const filterAutor = document.getElementById('repairFilterAutor') ? document.getElementById('repairFilterAutor').value : '';
+        
+        // Získání hledaného textu a jeho rozdělení na jednotlivá slova
+        const filterText = document.getElementById('repairFilterText') ? document.getElementById('repairFilterText').value.toLowerCase().trim() : '';
+        const hledanaSlova = filterText.split(/\s+/).filter(s => s.length > 0);
 
         const serazeneNaklady = [...aktivniKartaData.naklady].sort((a, b) => {
             const dateCmp = b.datum.localeCompare(a.datum);
@@ -2002,9 +2013,17 @@
         serazeneNaklady.forEach(n => {
             const zapsal = n.autor || 'admin';
 
+            // Zjištění původních filtrů
             if (filterOd && n.datum < filterOd) return;
             if (filterDo && n.datum > filterDo) return;
             if (filterAutor && zapsal !== filterAutor) return;
+            
+            // Kontrola textového vyhledávání všech slov
+            if (hledanaSlova.length > 0) {
+                const popisText = (n.popis || "").toLowerCase();
+                const obsahujeVse = hledanaSlova.every(slovo => popisText.includes(slovo));
+                if (!obsahujeVse) return; // Pokud neobsahuje VŠECHNA slova, řádek se přeskočí
+            }
 
             celkem += n.cena;
             let zobrazitDatum = n.datum;
@@ -2034,6 +2053,7 @@
         if(document.getElementById('repairFilterOd')) document.getElementById('repairFilterOd').value = '';
         if(document.getElementById('repairFilterDo')) document.getElementById('repairFilterDo').value = '';
         if(document.getElementById('repairFilterAutor')) document.getElementById('repairFilterAutor').value = '';
+        if(document.getElementById('repairFilterText')) document.getElementById('repairFilterText').value = '';
         vykreslitNakladyKarty();
     }
 
