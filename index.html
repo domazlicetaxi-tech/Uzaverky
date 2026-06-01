@@ -1828,8 +1828,32 @@
         if (heslo === null) return; 
         
         if (heslo === ADMIN_HESLO) {
+            // 1. Najdeme si data uzávěrky ještě PŘED jejím smazáním
+            const zaznam = databaze.find(d => d.docId === docId);
+
+            // 2. Smažeme záznam z databáze
             db.collection("uzaverky").doc(docId).delete()
-              .then(() => alert("Záznam byl trvale smazán z databáze."))
+              .then(() => {
+                  alert("Záznam byl trvale smazán z databáze.");
+
+                  // 3. OPRAVA: Vrácení tachometru vozidla na původní stav
+                  if (zaznam && zaznam.autoId) {
+                      const autoIndex = auta.findIndex(a => parseInt(a.id) === parseInt(zaznam.autoId));
+                      if (autoIndex !== -1) {
+                          // Bezpečnostní kontrola: Tachometr vrátíme jen tehdy, pokud je 
+                          // aktuální stav vozidla stejný jako koncový stav smazané uzávěrky.
+                          if (parseInt(auta[autoIndex].km) === parseInt(zaznam.kmCil)) {
+                              auta[autoIndex].km = parseInt(zaznam.kmStart) || 0;
+                              
+                              // Uložíme opravené kilometry zpět do databáze
+                              db.collection("nastaveni").doc("auta").set({ seznam: auta })
+                                .then(() => {
+                                    vykreslitDatabazi(); // Překreslíme tabulku
+                                });
+                          }
+                      }
+                  }
+              })
               .catch(err => alert("Chyba při mazání: " + err));
         } else {
             alert("Nesprávné administrátorské heslo! Záznam nebyl smazán.");
