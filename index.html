@@ -151,17 +151,7 @@
             gap: 4px; 
             margin-top: 20px; 
         }
-        .admin-actions { 
-            display: grid; 
-            grid-template-columns: 1fr;
-            gap: 8px; 
-            margin-bottom: 15px; 
-        }
-        .admin-actions button { 
-            padding: 12px; 
-            font-size: 14px; 
-        }
-
+        
         .header-info { 
             background: var(--primary-light); 
             padding: 12px; 
@@ -463,10 +453,7 @@
         }
         @media (min-width: 480px) {
             .filter-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .admin-actions {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(3, 1fr); /* 3 sloupečky pro statistiky (Od, Do, Auto) */
             }
         }
         .filter-container select, .filter-container input {
@@ -520,6 +507,60 @@
             border: 1px solid var(--border-light);
             padding: 15px;
             border-radius: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        @media (min-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        .stat-card {
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .stat-card h4 {
+            margin: 0 0 5px 0;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .stat-card .value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+        .stat-card.profit .value { color: var(--primary-color); }
+        .stat-card.expense .value { color: var(--danger-color); }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* Třída pro nová tlačítka v administraci */
+        .admin-grid-btn {
+            font-size: 12px;
+            padding: 12px 6px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (min-width: 480px) {
+            .admin-grid-btn { font-size: 13px; padding: 12px; }
         }
     </style>
 </head>
@@ -647,24 +688,31 @@
 
     <div id="sec-database" class="box">
         <h3>Archiv uzávěrek (Admin)</h3>
+        
         <button class="secondary-btn" onclick="prepnout('sec-login')" style="margin-bottom: 15px; padding: 12px; font-size: 15px;">⬅️ ZPĚT DO MENU</button>
         
-        <div class="admin-actions">
-            <button onclick="prepnout('sec-edit-cars')">🚗 SPRÁVA VOZIDEL</button>
-            <button onclick="prepnout('sec-fleet-cards')" style="background-color: #fd7e14;">🗂️ KARTA VOZIDEL</button>
-            <button onclick="prepnout('sec-edit-drivers')" style="background-color: #17a2b8;">👥 SPRÁVA ŘIDIČŮ</button>
-            <button onclick="prepnout('sec-login-logs')" style="background-color: #64748b;">📋 LOGY PŘIHLÁŠENÍ</button>
-            <button style="background-color: #0284c7;" onclick="exportToCSV()">📥 CSV EXPORT</button>
-            <button style="background-color: #6f42c1;" onclick="vyvolatImportCSV()">📥 IMPORT DAT</button>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px;">
+            <button class="admin-grid-btn" onclick="prepnout('sec-fleet-cards')" style="background-color: #fd7e14;">🗂️ KARTA VOZ.</button>
+            <button class="admin-grid-btn" onclick="prepnout('sec-edit-cars')">🚗 SPRÁVA VOZ.</button>
+            <button class="admin-grid-btn" onclick="prepnout('sec-edit-drivers')" style="background-color: #17a2b8;">👥 SPRÁVA ŘIDIČŮ</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+            <button class="admin-grid-btn" onclick="otevritStatistiky()" style="background-color: #8b5cf6;">📊 STATISTIKY</button>
+            <button class="admin-grid-btn" onclick="prepnout('sec-login-logs')" style="background-color: #64748b;">📋 LOGY</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                <button class="admin-grid-btn" style="background-color: #0284c7; padding: 12px 2px; font-size: 10px;" onclick="exportToCSV()">📥 EXPORT</button>
+                <button class="admin-grid-btn" style="background-color: #6f42c1; padding: 12px 2px; font-size: 10px;" onclick="vyvolatImportCSV()">📤 IMPORT</button>
+            </div>
         </div>
 
         <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="zprocessedImportCSV(event)">
 
-        <div class="filter-container">
-            <div><span class="filter-label">Vozidlo</span><select id="carFilter" onchange="vykreslitDatabazi()"></select></div>
-            <div><span class="filter-label">Řidič</span><select id="driverFilter" onchange="vykreslitDatabazi()"></select></div>
+        <div class="filter-container" style="grid-template-columns: 1fr 1fr;">
             <div><span class="filter-label">Datum od</span><input type="date" id="dateFromFilter" onchange="vykreslitDatabazi()"></div>
             <div><span class="filter-label">Datum do</span><input type="date" id="dateToFilter" onchange="vykreslitDatabazi()"></div>
+            <div><span class="filter-label">Vozidlo</span><select id="carFilter" onchange="vykreslitDatabazi()"></select></div>
+            <div><span class="filter-label">Řidič</span><select id="driverFilter" onchange="vykreslitDatabazi()"></select></div>
         </div>
         
         <div class="table-responsive">
@@ -699,10 +747,10 @@
         <h3>Historie přihlášení řidičů (Admin)</h3>
         <button class="secondary-btn" onclick="prepnout('sec-database')" style="margin-bottom: 15px; padding: 12px; font-size: 15px;">⬅️ ZPĚT DO ARCHIVU</button>
         
-        <div class="filter-container" style="background: #fee2e2; border-color: #f87171; align-items: end;">
+        <div class="filter-container" style="background: #fee2e2; border-color: #f87171; align-items: end; grid-template-columns: 1fr 1fr;">
             <div><span class="filter-label">Datum od</span><input type="date" id="logDateFrom" onchange="vykreslitLogy()"></div>
             <div><span class="filter-label">Datum do</span><input type="date" id="logDateTo" onchange="vykreslitLogy()"></div>
-            <button class="danger-btn" onclick="smazatLogyPodleFiltru()" style="padding: 10px; font-size: 14px; margin-top: 15px; height: 44px;">🗑️ SMAZAT ZOBRAZENÉ OBDOBÍ</button>
+            <button class="danger-btn" onclick="smazatLogyPodleFiltru()" style="padding: 10px; font-size: 14px; margin-top: 15px; height: 44px; grid-column: span 2;">🗑️ SMAZAT ZOBRAZENÉ OBDOBÍ</button>
         </div>
 
         <div class="table-responsive" style="max-height: 70vh;">
@@ -717,6 +765,70 @@
                 </thead>
                 <tbody id="loginLogsBody"></tbody>
             </table>
+        </div>
+    </div>
+
+    <div id="sec-statistics" class="box">
+        <h3>Firemní Statistiky a Grafy</h3>
+        <button class="secondary-btn" onclick="prepnout('sec-database')" style="margin-bottom: 15px; padding: 12px; font-size: 15px;">⬅️ ZPĚT DO ARCHIVU</button>
+
+        <div class="filter-container" style="background: #f0fdf4; border-color: #bbf7d0;">
+            <div><span class="filter-label">Zobrazit Od</span><input type="date" id="statDateFrom" onchange="vykreslitStatistiky()"></div>
+            <div><span class="filter-label">Zobrazit Do</span><input type="date" id="statDateTo" onchange="vykreslitStatistiky()"></div>
+            <div style="grid-column: 1 / -1;"><span class="filter-label">Zobrazit statistiku pro:</span><select id="statCarFilter" onchange="vykreslitStatistiky()"><option value="CELA_FIRMA">-- Celá firma (Všechna vozidla) --</option></select></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card profit">
+                <h4>K odevzdání celkem</h4>
+                <div class="value" id="statOdevzdat">0 Kč</div>
+            </div>
+            <div class="stat-card">
+                <h4>Hrubá tržba</h4>
+                <div class="value plus" id="statTrzba">0 Kč</div>
+            </div>
+            <div class="stat-card">
+                <h4>Nájezd vozidel</h4>
+                <div class="value" id="statKm">0 km</div>
+            </div>
+            <div class="stat-card expense">
+                <h4>Náklady uzávěrek</h4>
+                <div class="value" id="statVydaje">0 Kč</div>
+                <div style="font-size:11px; color:#64748b;" id="statPalivoL">0 L natankováno</div>
+            </div>
+            <div class="stat-card expense">
+                <h4>Náklady na opravy (Servis)</h4>
+                <div class="value" id="statOpravy">0 Kč</div>
+            </div>
+            <div class="stat-card">
+                <h4>Počet uzávěrek</h4>
+                <div class="value" id="statPocetUzaverek">0</div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 25px; font-size: 16px;">Vývoj ceny nafty (Kč / litr)</h3>
+        <div class="chart-container">
+            <canvas id="chartFuelPrice"></canvas>
+        </div>
+
+        <h3 style="margin-top: 25px; font-size: 16px;">Průměrná spotřeba vozidel (litry / 100 km)</h3>
+        <div class="chart-container">
+            <canvas id="chartConsumption"></canvas>
+        </div>
+
+        <h3 style="margin-top: 25px; font-size: 16px;">Aktivita řidičů (četnost služeb v období)</h3>
+        <div class="chart-container">
+            <canvas id="chartDrivers"></canvas>
+        </div>
+
+        <h3 style="margin-top: 25px; font-size: 16px;">Finanční toky: Tržby, Odevzdání a Náklady</h3>
+        <div class="chart-container">
+            <canvas id="chartFinancials"></canvas>
+        </div>
+
+        <h3 style="margin-top: 25px; font-size: 16px;">Nájezd vozidel v čase (km podle dnů)</h3>
+        <div class="chart-container">
+            <canvas id="chartMileage"></canvas>
         </div>
     </div>
 
@@ -929,6 +1041,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -947,7 +1060,6 @@
 
     const ADMIN_HESLO = "26 3654";
     let SERVIS_HESLO = "servis123"; 
-    const SAZBA = 9;
 
     let jeServisak = false; 
 
@@ -975,6 +1087,11 @@
 
     let aktivniKartaAutoId = null;
     let aktivniKartaData = { vin: "", stk: "", znamka: "", revize: "", interval: "", poznamka: "", naklady: [] };
+
+    // PRO STATISTIKY
+    let activeCharts = {};
+    let vsechnyKartyDataStav = [];
+    const SAZBA = 30; // Pro případný výpočet tržby z čistých km
 
     function toggleZavady() {
         let sekce = document.getElementById("sekceZavady");
@@ -1178,7 +1295,6 @@
         if (prompt("Zadejte heslo pro vstup do servisu:") === SERVIS_HESLO) {
             jeServisak = true;
             
-            // --- NOVÉ: Záznam do historie přihlášení pro Servis ---
             const ulozLogServisu = (lat, lng) => {
                 db.collection("logy_prihlaseni").add({
                     ridic: "SERVIS",
@@ -1198,7 +1314,6 @@
             } else {
                 ulozLogServisu(null, null);
             }
-            // --------------------------------------------------------
 
             prepnout('sec-fleet-cards'); 
             
@@ -1848,7 +1963,6 @@
             zavadaVyresena: true,
             zavadaVyresenaDatum: dnes
         }).then(() => {
-            // O překreslení se postará onSnapshot listener z databáze, který automaticky zavolá otevritHistoriiZavad()
         }).catch(err => alert("Chyba při označování závady za vyřešenou: " + err));
     }
 
@@ -2422,7 +2536,7 @@
                 });
 
                 Object.values(nejnovejsiZavadyAut).forEach(zaznam => {
-                    if (!zaznam.zavadaVyresena) { // <-- ZMĚNA: bere v potaz nový status závady
+                    if (!zaznam.zavadaVyresena) { 
                         const textZavady = `• ${zaznam.autoNazev} (${zaznam.autoSpz}) - nahlásil(a) ${zaznam.ridic}:\n  "${zaznam.zavada}"`;
                         if (!autaSeZavadou.includes(textZavady)) {
                             autaSeZavadou.push(textZavady);
@@ -2514,26 +2628,314 @@
         });
     }
 
-    function zkontrolovatSTK() {
+    // --- PŘEPRACOVANÉ STATISTIKY A GRAFY (S FILTREM AUT) ---
+    function otevritStatistiky() {
         const dnes = new Date();
-        const limit = new Date();
-        limit.setDate(dnes.getDate() + 7);
-
-        let varovani = [];
+        const prvniDenVMesici = new Date(dnes.getFullYear(), dnes.getMonth(), 1);
         
-        auta.forEach(auto => {
-            if (auto.stkDatum) {
-                const datumSTK = new Date(auto.stkDatum);
-                if (datumSTK <= limit && datumSTK >= dnes) {
-                    varovani.push(`- ${auto.nazev} (${auto.spz}): ${auto.stkDatum}`);
+        // Přednastavení filtrů na aktuální měsíc, pokud nejsou vyplněné
+        if(!document.getElementById('statDateFrom').value) {
+            document.getElementById('statDateFrom').value = prvniDenVMesici.toISOString().split('T')[0];
+        }
+        if(!document.getElementById('statDateTo').value) {
+            document.getElementById('statDateTo').value = dnes.toISOString().split('T')[0];
+        }
+
+        // Naplnění filtru vozidel konkrétními auty, která jsou v DB uzávěrek
+        const statCarSel = document.getElementById('statCarFilter');
+        const vybraneCar = statCarSel.value || "CELA_FIRMA";
+        statCarSel.innerHTML = '<option value="CELA_FIRMA">-- Celá firma (Všechna vozidla) --</option>';
+        let uniqueCars = [...new Set(databaze.map(d => d.autoNazev).filter(Boolean))];
+        uniqueCars.forEach(c => statCarSel.innerHTML += `<option value="${c}">${c}</option>`);
+        statCarSel.value = vybraneCar;
+
+        db.collection("karty_vozidel").get().then((querySnapshot) => {
+            vsechnyKartyDataStav = [];
+            querySnapshot.forEach((doc) => {
+                let data = doc.data();
+                // Potřebujeme zjistit i název auta pro filtraci oprav
+                let carObj = auta.find(a => a.id.toString() === doc.id);
+                let carName = carObj ? carObj.nazev : "Neznámé";
+                
+                if (data.naklady) {
+                    data.naklady.forEach(n => {
+                        vsechnyKartyDataStav.push({...n, autoNazev: carName});
+                    });
+                }
+            });
+            prepnout('sec-statistics');
+            vykreslitStatistiky();
+        }).catch(err => {
+            console.error("Chyba při stahování karet pro statistiky:", err);
+            prepnout('sec-statistics');
+            vykreslitStatistiky();
+        });
+    }
+
+    function ziskejKlicData(datumString) {
+        if (!datumString) return "Neznámé";
+        const match = datumString.match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+        if (!match) return "Neznámé";
+        return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+    }
+
+    function formatKlicZobrazeni(klic) {
+        if(klic === "Neznámé") return klic;
+        const p = klic.split('-');
+        if(p.length !== 3) return klic;
+        return `${parseInt(p[2])}.${parseInt(p[1])}.`;
+    }
+
+    function znicGraf(idGrafu) {
+        if (activeCharts[idGrafu]) {
+            activeCharts[idGrafu].destroy();
+            delete activeCharts[idGrafu];
+        }
+    }
+
+    function vykreslitStatistiky() {
+        const dateFromF = document.getElementById('statDateFrom').value;
+        const dateToF = document.getElementById('statDateTo').value;
+        const carF = document.getElementById('statCarFilter').value; // CELA_FIRMA nebo konkretni auto
+
+        let sumOdevzdat = 0, sumTrzba = 0, sumKm = 0, sumVydaje = 0, sumOpravy = 0, sumLitry = 0;
+        let pocetUzaverek = 0;
+
+        // Filtrování UZÁVĚREK dle datumu i vozidla
+        const filtrovaneUzaverky = databaze.filter(d => {
+            if (carF !== 'CELA_FIRMA' && d.autoNazev !== carF) return false;
+
+            if (dateFromF || dateToF) {
+                const match = (d.datum || "").match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+                if (!match) return false;
+                const dDate = new Date(match[3], match[2] - 1, match[1]);
+                
+                if (dateFromF && dDate < new Date(dateFromF + 'T00:00:00')) return false;
+                if (dateToF && dDate > new Date(dateToF + 'T23:59:59')) return false;
+            }
+            return true;
+        });
+
+        filtrovaneUzaverky.forEach(d => {
+            pocetUzaverek++;
+            sumOdevzdat += parseInt(d.kOdevzdani) || 0;
+            
+            let cisteKm = Math.max(0, (parseInt(d.ujetoCelkem) || 0) - (parseInt(d.odpocetKm) || 0));
+            sumKm += parseInt(d.ujetoCelkem) || 0;
+            
+            let trzba = parseInt(d.trzbaBrutto) || 0;
+            if (trzba === 0 && cisteKm > 0) trzba = cisteKm * SAZBA;
+            sumTrzba += trzba;
+
+            sumVydaje += (parseInt(d.fuelCena) || 0) + (parseInt(d.vydajeNazdrazaci) || 0) + (parseInt(d.vydajeOstatni) || 0);
+            sumLitry += parseFloat(d.fuelLitry) || 0;
+        });
+
+        // Filtrování OPRAV dle datumu i vozidla
+        const filtrovaneOpravy = vsechnyKartyDataStav.filter(naklad => {
+            if (carF !== 'CELA_FIRMA' && naklad.autoNazev !== carF) return false;
+
+            if (dateFromF && naklad.datum < dateFromF) return false;
+            if (dateToF && naklad.datum > dateToF) return false;
+
+            return true;
+        });
+
+        filtrovaneOpravy.forEach(naklad => sumOpravy += parseInt(naklad.cena) || 0);
+
+        // Zápis do souhrnných karet nahoře
+        document.getElementById('statOdevzdat').innerText = sumOdevzdat.toLocaleString('cs-CZ') + " Kč";
+        document.getElementById('statTrzba').innerText = sumTrzba.toLocaleString('cs-CZ') + " Kč";
+        document.getElementById('statKm').innerText = sumKm.toLocaleString('cs-CZ') + " km";
+        document.getElementById('statVydaje').innerText = sumVydaje.toLocaleString('cs-CZ') + " Kč";
+        document.getElementById('statOpravy').innerText = sumOpravy.toLocaleString('cs-CZ') + " Kč";
+        document.getElementById('statPocetUzaverek').innerText = pocetUzaverek;
+        document.getElementById('statPalivoL').innerText = sumLitry.toFixed(2) + " L natankováno";
+
+        // Vykreslení grafů na zfiltrovaných datech
+        vykreslitPokrocileGrafy(filtrovaneUzaverky, filtrovaneOpravy, carF);
+    }
+
+    function vykreslitPokrocileGrafy(uzaverky, opravy, vybraneAuto) {
+        // Unikátní časová osa (Dny)
+        const unikatniDnySet = new Set();
+        uzaverky.forEach(u => unikatniDnySet.add(ziskejKlicData(u.datum)));
+        let serazeneDny = Array.from(unikatniDnySet).sort();
+        let labelsDny = serazeneDny.map(k => formatKlicZobrazeni(k));
+
+        // Nastavení pole sledovaných aut (Všechna nebo to jedno vybrané)
+        let seznamAut = [];
+        if (vybraneAuto === 'CELA_FIRMA') {
+            seznamAut = [...new Set(uzaverky.map(u => u.autoNazev).filter(Boolean))];
+        } else {
+            seznamAut = [vybraneAuto];
+        }
+        const barvyAut = ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#14b8a6', '#f97316', '#06b6d4', '#ec4899'];
+
+        // 1. GRAF: VÝVOJ CENY NAFTY (Kč/litr)
+        znicGraf('fuelPrice');
+        let dataNafta = {};
+        uzaverky.forEach(u => {
+            if (u.fuelLitry > 0 && u.fuelCena > 0) {
+                const klic = ziskejKlicData(u.datum);
+                if(!dataNafta[klic]) dataNafta[klic] = { sumaCen:0, sumaLitru:0 };
+                dataNafta[klic].sumaCen += u.fuelCena;
+                dataNafta[klic].sumaLitru += u.fuelLitry;
+            }
+        });
+        const fuelValues = serazeneDny.map(klic => {
+            if(!dataNafta[klic]) return null;
+            return Math.round((dataNafta[klic].sumaCen / dataNafta[klic].sumaLitru) * 100) / 100;
+        });
+
+        activeCharts['fuelPrice'] = new Chart(document.getElementById('chartFuelPrice').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labelsDny,
+                datasets: [{
+                    label: 'Průměrná cena tankování (Kč/l)',
+                    data: fuelValues,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    spanGaps: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 2. GRAF: SPOTŘEBA VOZIDEL (L/100km)
+        znicGraf('consumption');
+        let dataSpotreba = {};
+        
+        uzaverky.forEach(u => {
+            if(u.fuelLitry > 0 && u.autoNazev) {
+                let jeteKm = u.ujetoCelkem;
+                if(u.fuelKm > 0 && u.kmStart > 0 && u.fuelKm > u.kmStart) { jeteKm = u.fuelKm - u.kmStart; }
+                if(jeteKm > 0) {
+                    const klic = ziskejKlicData(u.datum);
+                    if(!dataSpotreba[klic]) dataSpotreba[klic] = {};
+                    if(!dataSpotreba[klic][u.autoNazev]) dataSpotreba[klic][u.autoNazev] = { l:0, km:0 };
+                    dataSpotreba[klic][u.autoNazev].l += u.fuelLitry;
+                    dataSpotreba[klic][u.autoNazev].km += jeteKm;
                 }
             }
         });
 
-        if (varovani.length > 0) {
-            alert("⚠️ POZOR! U následujících vozidel končí STK do 7 dnů:\n\n" + varovani.join("\n"));
-        }
+        const datasetsSpotreba = seznamAut.map((auto, index) => {
+            let dataAuta = serazeneDny.map(klic => {
+                if(dataSpotreba[klic] && dataSpotreba[klic][auto]) {
+                    return Math.round((dataSpotreba[klic][auto].l / dataSpotreba[klic][auto].km) * 100 * 100) / 100;
+                }
+                return null;
+            });
+            return {
+                label: auto,
+                data: dataAuta,
+                borderColor: barvyAut[index % barvyAut.length],
+                borderWidth: 2,
+                tension: 0.2,
+                fill: false,
+                spanGaps: true
+            };
+        });
+
+        activeCharts['consumption'] = new Chart(document.getElementById('chartConsumption').getContext('2d'), {
+            type: 'line',
+            data: { labels: labelsDny, datasets: datasetsSpotreba },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 3. GRAF: AKTIVITA ŘIDIČŮ (Počet směn)
+        znicGraf('drivers');
+        let aktivitaRidicu = {};
+        uzaverky.forEach(u => {
+            if(u.ridic) aktivitaRidicu[u.ridic] = (aktivitaRidicu[u.ridic] || 0) + 1;
+        });
+        
+        let serazeniRidici = Object.keys(aktivitaRidicu).sort((a,b) => aktivitaRidicu[b] - aktivitaRidicu[a]);
+
+        activeCharts['drivers'] = new Chart(document.getElementById('chartDrivers').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: serazeniRidici,
+                datasets: [{
+                    label: 'Počet odevzdaných uzávěrek',
+                    data: serazeniRidici.map(r => aktivitaRidicu[r]),
+                    backgroundColor: '#1e293b',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 4. GRAF: FINANČNÍ TOKY (Tržby, Odevzdání, Náklady)
+        znicGraf('financials');
+        let finData = {};
+        serazeneDny.forEach(k => finData[k] = { trzba: 0, odevzdano: 0, naklady: 0 });
+
+        uzaverky.forEach(u => {
+            const klic = ziskejKlicData(u.datum);
+            if(finData[klic]) {
+                let cisteKm = Math.max(0, (parseInt(u.ujetoCelkem)||0) - (parseInt(u.odpocetKm)||0));
+                let trzba = parseInt(u.trzbaBrutto)||0;
+                if(trzba === 0 && cisteKm > 0) trzba = cisteKm * SAZBA;
+                
+                finData[klic].trzba += trzba;
+                finData[klic].odevzdano += parseInt(u.kOdevzdani) || 0;
+                finData[klic].naklady += (parseInt(u.fuelCena)||0) + (parseInt(u.vydajeNazdrazaci)||0) + (parseInt(u.vydajeOstatni)||0);
+            }
+        });
+
+        opravy.forEach(o => {
+            if(finData[o.datum]) finData[o.datum].naklady += parseInt(o.cena) || 0;
+        });
+
+        activeCharts['financials'] = new Chart(document.getElementById('chartFinancials').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labelsDny,
+                datasets: [
+                    { label: 'Hrubá tržba (Kč)', data: serazeneDny.map(k => finData[k].trzba), backgroundColor: '#3b82f6' },
+                    { label: 'Odevzdáno - Zisk (Kč)', data: serazeneDny.map(k => finData[k].odevzdano), backgroundColor: '#22c55e' },
+                    { label: 'Náklady - Uzávěrka+Servis (Kč)', data: serazeneDny.map(k => finData[k].naklady), backgroundColor: '#ef4444' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 5. GRAF: NÁJEZD VOZIDEL (KM PODLE DNE)
+        znicGraf('mileage');
+        let najezdData = {};
+        uzaverky.forEach(u => {
+            if(u.autoNazev && u.ujetoCelkem) {
+                const klic = ziskejKlicData(u.datum);
+                if(!najezdData[klic]) najezdData[klic] = {};
+                najezdData[klic][u.autoNazev] = (najezdData[klic][u.autoNazev] || 0) + parseInt(u.ujetoCelkem);
+            }
+        });
+
+        const datasetsNajezd = seznamAut.map((auto, index) => {
+            return {
+                label: `${auto} (km)`,
+                data: serazeneDny.map(klic => (najezdData[klic] && najezdData[klic][auto]) ? najezdData[klic][auto] : 0),
+                borderColor: barvyAut[index % barvyAut.length],
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.1,
+                pointRadius: 4
+            };
+        });
+
+        activeCharts['mileage'] = new Chart(document.getElementById('chartMileage').getContext('2d'), {
+            type: 'line',
+            data: { labels: labelsDny, datasets: datasetsNajezd },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
     }
+
 </script>
 </body>
 </html>
