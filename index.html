@@ -1834,25 +1834,37 @@
             // 2. Smažeme záznam z databáze
             db.collection("uzaverky").doc(docId).delete()
               .then(() => {
-                  alert("Záznam byl trvale smazán z databáze.");
-
-                  // 3. OPRAVA: Vrácení tachometru vozidla na původní stav
-                  if (zaznam && zaznam.autoId) {
-                      const autoIndex = auta.findIndex(a => parseInt(a.id) === parseInt(zaznam.autoId));
+                  // 3. OPRAVA: Dotaz na vrácení kilometrů
+                  if (zaznam) {
+                      // Hledáme auto primárně podle ID, sekundárně podle jména
+                      const autoIndex = auta.findIndex(a => 
+                          (zaznam.autoId && parseInt(a.id) === parseInt(zaznam.autoId)) || 
+                          (a.nazev === zaznam.autoNazev)
+                      );
+                      
                       if (autoIndex !== -1) {
-                          // Bezpečnostní kontrola: Tachometr vrátíme jen tehdy, pokud je 
-                          // aktuální stav vozidla stejný jako koncový stav smazané uzávěrky.
-                          if (parseInt(auta[autoIndex].km) === parseInt(zaznam.kmCil)) {
-                              auta[autoIndex].km = parseInt(zaznam.kmStart) || 0;
-                              
-                              // Uložíme opravené kilometry zpět do databáze
+                          const auto = auta[autoIndex];
+                          const puvodniKm = parseInt(zaznam.kmStart) || 0;
+                          
+                          // Zobrazíme potvrzovací okno přímo pro administrátora
+                          const vratitKm = confirm(`Záznam o uzávěrce byl smazán.\n\nChcete také vrátit tachometr vozidla ${auto.nazev} z aktuálních ${auto.km} km zpět na původních ${puvodniKm} km?`);
+                          
+                          if (vratitKm) {
+                              auto.km = puvodniKm;
                               db.collection("nastaveni").doc("auta").set({ seznam: auta })
                                 .then(() => {
-                                    vykreslitDatabazi(); // Překreslíme tabulku
-                                });
+                                    alert(`Hotovo! Tachometr vozidla ${auto.nazev} byl úspěšně vrácen na ${puvodniKm} km.`);
+                                    vykreslitDatabazi();
+                                })
+                                .catch(err => alert("Chyba při aktualizaci kilometrů: " + err));
+                              return; // Konec, ať nevyskakují další hlášky
                           }
                       }
                   }
+                  
+                  // Pokud auto nebylo nalezeno, nebo admin klikl na "Zrušit"
+                  alert("Záznam byl trvale smazán (kilometry vozidla nebyly změněny).");
+                  vykreslitDatabazi();
               })
               .catch(err => alert("Chyba při mazání: " + err));
         } else {
