@@ -1671,18 +1671,37 @@
             const zkontrolovano = d.zkontrolovano || false;
 
             let spotrebaText = "0.00 l";
-        try {
-            if (fuelLitry > 0 && fuelKm > kmStart) {
-                let diff = fuelKm - kmStart;
-                if (diff > 0) {
-                    spotrebaText = ((fuelLitry / diff) * 100).toFixed(2) + " l";
+            try {
+                if (fuelLitry > 0 && fuelKm > 0) {
+                    const parseDatum = (txt) => {
+                        const m = (txt || "").match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+                        return m ? new Date(m[3], m[2] - 1, m[1]).getTime() : 0;
+                    };
+                    const aktualniCas = parseDatum(d.datum);
+
+                    const predchoziTankovani = databaze.filter(u => 
+                        u.autoNazev === d.autoNazev && 
+                        u.fuelLitry > 0 && 
+                        u.fuelKm > 0 && 
+                        u.docId !== d.docId &&
+                        parseDatum(u.datum) <= aktualniCas
+                    ).sort((a, b) => parseDatum(b.datum) - parseDatum(a.datum));
+
+                    const minule = predchoziTankovani[0];
+
+                    if (minule && fuelKm > minule.fuelKm) {
+                        let diffInterval = fuelKm - minule.fuelKm;
+                        spotrebaText = ((fuelLitry / diffInterval) * 100).toFixed(2) + " l";
+                    } else {
+                        let diffSmena = fuelKm - kmStart;
+                        if (diffSmena > 0) {
+                            spotrebaText = ((fuelLitry / diffSmena) * 100).toFixed(2) + " l *";
+                        }
+                    }
                 }
+            } catch(e) {
+                spotrebaText = "0.00 l";
             }
-        } catch(e) {
-            spotrebaText = "0.00 l";
-        }
-                }
-            } catch(e) { spotrebaText = "0.00 l"; }
 
             let statusBtn = '';
             if (zkontrolovano) {
