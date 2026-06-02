@@ -1828,43 +1828,38 @@
         if (heslo === null) return; 
         
         if (heslo === ADMIN_HESLO) {
-            // 1. Najdeme si data uzávěrky ještě PŘED jejím smazáním
-            const zaznam = databaze.find(d => d.docId === docId);
+            // 1. Zjistíme, který záznam mažeme, abychom věděli ID auta
+            const mazanyZaznam = databaze.find(d => d.docId === docId);
 
-            // 2. Smažeme záznam z databáze
             db.collection("uzaverky").doc(docId).delete()
               .then(() => {
-                  // 3. OPRAVA: Dotaz na vrácení kilometrů
-                  if (zaznam) {
-                      // Hledáme auto primárně podle ID, sekundárně podle jména
-                      const autoIndex = auta.findIndex(a => 
-                          (zaznam.autoId && parseInt(a.id) === parseInt(zaznam.autoId)) || 
-                          (a.nazev === zaznam.autoNazev)
+                  alert("Záznam byl trvale smazán z databáze.");
+
+                  // 2. Přepočet kilometrů pro dané auto
+                  if (mazanyZaznam && mazanyZaznam.autoId) {
+                      // Vyfiltrujeme všechny uzávěrky pro toto auto, kromě té, kterou právě mažeme
+                      const zbyvajiciUzaverkyAuta = databaze.filter(d => 
+                          d.autoId === mazanyZaznam.autoId && d.docId !== docId
                       );
-                      
-                      if (autoIndex !== -1) {
-                          const auto = auta[autoIndex];
-                          const puvodniKm = parseInt(zaznam.kmStart) || 0;
+
+                      let novyStavKm = 0;
+
+                      // Pokud autu zbývají nějaké uzávěrky, najdeme tu s nejvyšším koncovým stavem
+                      if (zbyvajiciUzaverkyAuta.length > 0) {
+                          zbyvajiciUzaverkyAuta.sort((a, b) => (b.kmCil || 0) - (a.kmCil || 0));
+                          novyStavKm = zbyvajiciUzaverkyAuta[0].kmCil || 0;
+                      }
+
+                      // Najdeme auto v našem poli a aktualizujeme mu kilometry
+                      const indexAuta = auta.findIndex(a => a.id === mazanyZaznam.autoId);
+                      if (indexAuta !== -1) {
+                          auta[indexAuta].km = novyStavKm;
                           
-                          // Zobrazíme potvrzovací okno přímo pro administrátora
-                          const vratitKm = confirm(`Záznam o uzávěrce byl smazán.\n\nChcete také vrátit tachometr vozidla ${auto.nazev} z aktuálních ${auto.km} km zpět na původních ${puvodniKm} km?`);
-                          
-                          if (vratitKm) {
-                              auto.km = puvodniKm;
-                              db.collection("nastaveni").doc("auta").set({ seznam: auta })
-                                .then(() => {
-                                    alert(`Hotovo! Tachometr vozidla ${auto.nazev} byl úspěšně vrácen na ${puvodniKm} km.`);
-                                    vykreslitDatabazi();
-                                })
-                                .catch(err => alert("Chyba při aktualizaci kilometrů: " + err));
-                              return; // Konec, ať nevyskakují další hlášky
-                          }
+                          // Zapíšeme opravený stav aut zpět do databáze
+                          db.collection("nastaveni").doc("auta").set({ seznam: auta })
+                            .catch(err => console.error("Chyba při aktualizaci km u auta: ", err));
                       }
                   }
-                  
-                  // Pokud auto nebylo nalezeno, nebo admin klikl na "Zrušit"
-                  alert("Záznam byl trvale smazán (kilometry vozidla nebyly změněny).");
-                  vykreslitDatabazi();
               })
               .catch(err => alert("Chyba při mazání: " + err));
         } else {
