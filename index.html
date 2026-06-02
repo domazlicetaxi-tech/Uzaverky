@@ -1673,19 +1673,15 @@
             let spotrebaText = "0.00 l";
             try {
                 if (fuelLitry > 0 && fuelKm > 0) {
-                    const parseDatum = (txt) => {
-                        const m = (txt || "").match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
-                        return m ? new Date(m[3], m[2] - 1, m[1]).getTime() : 0;
-                    };
-                    const aktualniCas = parseDatum(d.datum);
-
-                    const predchoziTankovani = databaze.filter(u => 
-                        u.autoNazev === d.autoNazev && 
-                        u.fuelLitry > 0 && 
-                        u.fuelKm > 0 && 
-                        u.docId !== d.docId &&
-                        parseDatum(u.datum) <= aktualniCas
-                    ).sort((a, b) => parseDatum(b.datum) - parseDatum(a.datum));
+                    // NOVÝ KÓD
+// Najdeme předchozí tankování striktně podle stavu tachometru pumpy
+const predchoziTankovani = databaze.filter(u => 
+    u.autoNazev === d.autoNazev && // Stejné auto
+    parseFloat(u.fuelLitry) > 0 && // Skutečně se tankovalo
+    parseInt(u.fuelKm) > 0 &&      // Je zadán tachometr při tankování
+    u.docId !== d.docId &&         // Není to ten samý záznam
+    parseInt(u.fuelKm) < fuelKm    // Tachometr minulého tankování MUSÍ být menší než aktuální
+).sort((a, b) => parseInt(b.fuelKm) - parseInt(a.fuelKm)); // Seřadíme sestupně (nejvyšší km z minula budou první)
 
                     const minule = predchoziTankovani[0];
 
