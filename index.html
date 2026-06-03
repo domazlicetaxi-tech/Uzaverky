@@ -1116,7 +1116,15 @@
 
     window.onload = () => {
         // Zobrazení login sekce okamžitě pro zamezení záseku na čisté stránce
-        prepnout(prihlasenyUzivatel ? 'sec-enter' : 'sec-login');
+        // TENTO BLOK VLOŽTE NA JEHO MÍSTO:
+if (prihlasenyUzivatel) { 
+    if (document.getElementById('welcomeUserEnter')) {
+        document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
+    }
+    prepnout('sec-enter'); 
+} else { 
+    prepnout('sec-login'); 
+}
 
         db.collection("nastaveni").doc("servis").onSnapshot((doc) => {
             if (doc.exists && doc.data().heslo) {
@@ -1126,22 +1134,26 @@
             }
         });
         db.collection("nastaveni").doc("ridici").onSnapshot((doc) => {
-            if (doc.exists) ridici = doc.data();
-            else db.collection("nastaveni").doc("ridici").set(ridici);
-            nactiAdokresliRidice();
-        });
+    if (doc.exists) ridici = doc.data();
+    else db.collection("nastaveni").doc("ridici").set(ridici);
+    nactiAdokresliRidice();
+
+    // 🌟 NOVÉ: Kontrola, zda admin nezměnil heslo za běhu
+    // 🌟 NOVÉ: Kontrola, zda admin nezměnil heslo za běhu
+if (prihlasenyUzivatel && ridici) {
+    let aktualniHesloVDB = ridici[prihlasenyUzivatel] || null;
+    let ulozeneHesloVProhlizeci = localStorage.getItem('taxi_pass');
+    if (!aktualniHesloVDB || aktualniHesloVDB !== ulozeneHesloVProhlizeci) {
+        alert("🔑 Vaše heslo bylo změněno. Přihlaste se prosím znovu.");
+        odhlasit();
+    }
+}
+});
 
         db.collection("nastaveni").doc("auta").onSnapshot((doc) => {
-            if (doc.exists) auta = doc.data().seznam || defaultAuta;
-            else db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
-            
-            if (prihlasenyUzivatel) { 
-                document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
-                prepnout('sec-enter'); 
-            } else { 
-                prepnout('sec-login'); 
-            }
-        });
+        if (doc.exists) auta = doc.data().seznam || defaultAuta;
+        else db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
+    });
 
         db.collection("uzaverky").onSnapshot((querySnapshot) => {
             databaze = [];
@@ -1236,6 +1248,7 @@
         if (ridici[u] && ridici[u] === p) {
             prihlasenyUzivatel = u; 
             localStorage.setItem('taxi_user', u);
+            localStorage.setItem('taxi_pass', p); // Přidáno: Ukládáme i heslo
             
             document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
             prepnout('sec-enter');
@@ -1291,7 +1304,11 @@
         }
     }
 
-    function odhlasit() { localStorage.removeItem('taxi_user'); location.reload(); }
+    function odhlasit() { 
+        localStorage.removeItem('taxi_user'); 
+        localStorage.removeItem('taxi_pass'); // Přidáno: Smaže i heslo
+        location.reload(); 
+    }
     
     function vstoupitAdmin() { 
         if (prompt("Zadejte heslo administrátora:") === ADMIN_HESLO) prepnout('sec-reg'); 
