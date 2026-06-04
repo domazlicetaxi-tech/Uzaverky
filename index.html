@@ -3015,7 +3015,7 @@ const predchoziTankovani = databaze.filter(u =>
                 datasets: [
                     { label: 'Hrubá tržba (Kč)', data: serazeneDny.map(k => finData[k].trzba), backgroundColor: '#3b82f6' },
                     { label: 'Odevzdáno - Zisk (Kč)', data: serazeneDny.map(k => finData[k].odevzdano), backgroundColor: '#22c55e' },
-                    { label: 'Náklady - Uzávěrka+Servis (Kč)', data: serazeneDny.map(k => finData[k].naklady), backgroundColor: '#ef4444' }
+                    { label: 'Náklady - Uzávěrka+Servis (Kč)', data: serazeneDny.map(k => finData[k]?.naklady || 0), backgroundColor: '#ef4444' }
                 ]
             },
             options: { responsive: true, maintainAspectRatio: false }
