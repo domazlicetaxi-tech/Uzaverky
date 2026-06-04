@@ -1093,9 +1093,12 @@
     let aktivniKartaData = { vin: "", stk: "", znamka: "", revize: "", interval: "", poznamka: "", naklady: [] };
 
     // PRO STATISTIKY
+    // PRO STATISTIKY
     let activeCharts = {};
     let vsechnyKartyDataStav = [];
     let SAZBA = 9; // Pro případný výpočet tržby z čistých km
+    let adminHeslo = "admin123"; // Výchozí záložní heslo
+    let servisHeslo = "servis123"; // Výchozí záložní heslo
 
     function toggleZavady() {
         let sekce = document.getElementById("sekceZavady");
