@@ -1155,6 +1155,13 @@ if (prihlasenyUzivatel && ridici) {
         else db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
     });
 
+        // 🌟 NOVÉ: Načítání sazby za km z databáze
+        db.collection("nastaveni").doc("konfigurace").onSnapshot((doc) => {
+            if (doc.exists && doc.data().sazba) {
+                SAZBA = parseFloat(doc.data().sazba);
+            }
+        });
+
         db.collection("uzaverky").onSnapshot((querySnapshot) => {
             databaze = [];
             querySnapshot.forEach((doc) => {
