@@ -1367,7 +1367,7 @@ if (prihlasenyUzivatel && ridici) {
     }
 
     function vstoupitDoDatabaze() {
-        if (prompt("Zadejte heslo administrátora pro vstup do archivu:") === ADMIN_HESLO) {
+        if (prompt("Zadejte heslo administrátora pro vstup do archivu:") === adminHeslo) { // <-- Zde je změna na adminHeslo
             prepnout('sec-database');
             zkontrolovatBliziciSeSTK(); 
         } else {
