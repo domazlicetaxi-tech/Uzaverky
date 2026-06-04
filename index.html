@@ -2255,16 +2255,24 @@
         });
     }
 
-    function adminPridatRidice() {
-        const u = document.getElementById('adminNewUser').value.trim();
-        const p = document.getElementById('adminNewPass').value.trim();
-        if(u && p) {
-            ridici[u] = p;
+   function adminPridatRidice() {
+    const u = document.getElementById('adminNewUser').value.trim();
+    const p = document.getElementById('adminNewPass').value.trim();
+    if(u && p) {
+        ridici[u] = p;
+        
+        // OPRAVA: Okamžité uložení do databáze Firebase
+        db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
             document.getElementById('adminNewUser').value = "";
             document.getElementById('adminNewPass').value = "";
             nactiAdokresliRidice();
-        } else alert("Vyplňte jméno i heslo!");
-    }
+            alert(`Řidič "${u}" byl úspěšně přidán do databáze.`);
+        }).catch((err) => {
+            alert("Chyba při ukládání do databáze: " + err);
+        });
+        
+    } else alert("Vyplňte jméno i heslo!");
+}
 
     function adminSmazatRidice(r) {
         if(confirm(`Smazat řidiče "${r}"?`)) {
