@@ -1159,9 +1159,13 @@ if (prihlasenyUzivatel && ridici) {
     });
 
         // 🌟 NOVÉ: Načítání sazby za km z databáze
+        // 🌟 NOVÉ: Načítání sazby a hesel z databáze
         db.collection("nastaveni").doc("konfigurace").onSnapshot((doc) => {
-            if (doc.exists && doc.data().sazba) {
-                SAZBA = parseFloat(doc.data().sazba);
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.sazba) SAZBA = parseFloat(data.sazba);
+                if (data.adminHeslo) adminHeslo = data.adminHeslo;
+                if (data.servisHeslo) servisHeslo = data.servisHeslo;
             }
         });
 
