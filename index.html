@@ -771,10 +771,11 @@
         <h3>Firemní Statistiky a Grafy</h3>
         <button class="secondary-btn" onclick="prepnout('sec-database')" style="margin-bottom: 15px; padding: 12px; font-size: 15px;">⬅️ ZPĚT DO ARCHIVU</button>
 
-        <div class="filter-container" style="background: #f0fdf4; border-color: #bbf7d0;">
+        <div class="filter-container" style="background: #f0fdf4; border-color: #bbf7d0; grid-template-columns: 1fr 1fr;">
             <div><span class="filter-label">Zobrazit Od</span><input type="date" id="statDateFrom" onchange="vykreslitStatistiky()"></div>
             <div><span class="filter-label">Zobrazit Do</span><input type="date" id="statDateTo" onchange="vykreslitStatistiky()"></div>
-            <div style="grid-column: 1 / -1;"><span class="filter-label">Zobrazit statistiku pro:</span><select id="statCarFilter" onchange="vykreslitStatistiky()"><option value="CELA_FIRMA">-- Celá firma (Všechna vozidla) --</option></select></div>
+            <div><span class="filter-label">Zobrazit vozidlo:</span><select id="statCarFilter" onchange="vykreslitStatistiky()"><option value="CELA_FIRMA">-- Všechna vozidla --</option></select></div>
+            <div><span class="filter-label">Zobrazit řidiče:</span><select id="statDriverFilter" onchange="vykreslitStatistiky()"><option value="VSICHNI">-- Všichni řidiči --</option></select></div>
         </div>
 
         <div class="stats-grid">
@@ -2800,6 +2801,13 @@
         uniqueCars.forEach(c => statCarSel.innerHTML += `<option value="${c}">${c}</option>`);
         statCarSel.value = vybraneCar;
 
+        const statDriverSel = document.getElementById('statDriverFilter');
+        const vybranyDriver = statDriverSel.value || "VSICHNI";
+        statDriverSel.innerHTML = '<option value="VSICHNI">-- Všichni řidiči --</option>';
+        let uniqueDrivers = [...new Set(databaze.map(d => d.ridic).filter(Boolean))];
+        uniqueDrivers.forEach(r => statDriverSel.innerHTML += `<option value="${r}">${r}</option>`);
+        statDriverSel.value = vybranyDriver;
+
         db.collection("karty_vozidel").get().then((querySnapshot) => {
             vsechnyKartyDataStav = [];
             querySnapshot.forEach((doc) => {
@@ -2847,12 +2855,14 @@
         const dateFromF = document.getElementById('statDateFrom').value;
         const dateToF = document.getElementById('statDateTo').value;
         const carF = document.getElementById('statCarFilter').value; 
+        const driverF = document.getElementById('statDriverFilter').value; // Nový parametr
 
         let sumOdevzdat = 0, sumTrzba = 0, sumKm = 0, sumVydaje = 0, sumOpravy = 0, sumLitry = 0;
         let pocetUzaverek = 0;
 
         const filtrovaneUzaverky = databaze.filter(d => {
             if (carF !== 'CELA_FIRMA' && d.autoNazev !== carF) return false;
+            if (driverF !== 'VSICHNI' && d.ridic !== driverF) return false; // Filtrování řidiče
 
             if (dateFromF || dateToF) {
                 const match = (d.datum || "").match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
