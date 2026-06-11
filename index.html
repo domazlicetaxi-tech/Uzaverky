@@ -1157,9 +1157,14 @@
         });
         
         db.collection("nastaveni").doc("ridici").onSnapshot((doc) => {
-            if (doc.exists) ridici = doc.data();
-            else db.collection("nastaveni").doc("ridici").set(ridici);
-            nactiAdokresliRidice();
+    if (doc.exists) {
+        ridici = doc.data();
+    } else {
+        console.error("Dokument s řidiči nebyl nalezen!");
+        // Zde už nebudeme spouštět .set(), aby se prázdný objekt nepřepsal do ostré databáze
+    }
+    nactiAdokresliRidice();
+    // ...
 
             if (prihlasenyUzivatel && ridici && prihlasenyUzivatel !== "admin") {
                 let aktualniHesloVDB = ridici[prihlasenyUzivatel] || null;
