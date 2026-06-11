@@ -1172,9 +1172,17 @@
         });
 
         db.collection("nastaveni").doc("auta").onSnapshot((doc) => {
-            if (doc.exists) auta = doc.data().seznam || defaultAuta;
-            else db.collection("nastaveni").doc("auta").set({ seznam: defaultAuta });
-        });
+    if (doc.exists) {
+        auta = doc.data().seznam;
+    } else {
+        console.error("Dokument s auty ve Firebase nebyl nalezen!");
+        // Zde nespouštíme .set(), aby se data nepřepsala. 
+        // Aplikace spadne do chyby, ale nepřemaže ti ostrou databázi.
+        auta = []; 
+    }
+}, (error) => {
+    console.error("Chyba při čtení z Firebase (možná špatná doména/práva):", error);
+});
 
         db.collection("nastaveni").doc("konfigurace").onSnapshot((doc) => {
             if (doc.exists) {
