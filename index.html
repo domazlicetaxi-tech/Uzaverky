@@ -1057,6 +1057,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script> <!-- TENTO ŘÁDEK PŘIDÁN -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
@@ -1071,6 +1072,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     // BEZPEČNOSTNÍ FUNKCE PRO OVĚŘENÍ HESLA
     // Heslo je zde chráněno přes matematický posun znaků (ASCII), 
@@ -1110,7 +1112,7 @@
     ];
 
     let auta = defaultAuta;
-    let prihlasenyUzivatel = localStorage.getItem('taxi_user') || "";
+    let prihlasenyUzivatel = "";
     let vybraneAuto = null;
     let docasneVypocty = {}; 
 
@@ -1139,14 +1141,19 @@
     }
 
     window.onload = () => {
-        if (prihlasenyUzivatel) { 
-            if (document.getElementById('welcomeUserEnter')) {
-                document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
+        // NOVÁ KONTROLA PŘIHLÁŠENÍ PŘES FIREBASE
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                prihlasenyUzivatel = user.email.split('@')[0];
+                if (document.getElementById('welcomeUserEnter')) {
+                    document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
+                }
+                prepnout('sec-enter'); 
+            } else {
+                prihlasenyUzivatel = "";
+                prepnout('sec-login'); 
             }
-            prepnout('sec-enter'); 
-        } else { 
-            prepnout('sec-login'); 
-        }
+        });
 
         db.collection("nastaveni").doc("servis").onSnapshot((doc) => {
             if (doc.exists && doc.data().heslo) {
@@ -1166,14 +1173,7 @@
     nactiAdokresliRidice();
     // ...
 
-            if (prihlasenyUzivatel && ridici && prihlasenyUzivatel !== "admin") {
-                let aktualniHesloVDB = ridici[prihlasenyUzivatel] || null;
-                let ulozeneHesloVProhlizeci = localStorage.getItem('taxi_pass');
-                if (!aktualniHesloVDB || aktualniHesloVDB !== ulozeneHesloVProhlizeci) {
-                    alert("🔑 Vaše heslo bylo změněno. Přihlaste se prosím znovu.");
-                    odhlasit();
-                }
-            }
+            
         });
 
         db.collection("nastaveni").doc("auta").onSnapshot((doc) => {
@@ -1285,31 +1285,28 @@
     }
 
     function prihlasit() {
-        const u = document.getElementById('logUser').value.trim();
+        const u = document.getElementById('logUser').value.trim().toLowerCase();
         const p = document.getElementById('logPass').value;
         
-        // Unikátní zabezpečená kontrola pro admina
-        if (u.toLowerCase() === "admin") {
-            if (overitHesloAdmina(p)) {
-                prihlasenyUzivatel = "admin"; 
-                localStorage.setItem('taxi_user', "admin");
-                localStorage.setItem('taxi_pass', "skryte_bezpecne_heslo"); // Tady se neukládá pravé heslo
-                document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
-                prepnout('sec-enter');
-            } else {
-                alert("Neplatné přihlašovací údaje!");
-            }
+        if (!u || !p) {
+            alert("Vyplňte jméno i heslo!");
             return;
         }
 
-        if (ridici[u] && ridici[u] === p) {
-            prihlasenyUzivatel = u; 
-            localStorage.setItem('taxi_user', u);
-            localStorage.setItem('taxi_pass', p); 
-            
-            document.getElementById('welcomeUserEnter').innerText = "👤 Přihlášen: " + prihlasenyUzivatel;
-            prepnout('sec-enter');
-        } else alert("Neplatné přihlašovací údaje!");
+        const email = u + "@greentaxi.cz";
+
+        auth.signInWithEmailAndPassword(email, p)
+            .then(() => {
+                document.getElementById('logUser').value = "";
+                document.getElementById('logPass').value = "";
+                if (u === "admin") {
+                    zkontrolovatBliziciSeSTK();
+                }
+            })
+            .catch((error) => {
+                alert("Neplatné jméno nebo heslo!");
+                console.error("Chyba přihlášení:", error);
+            });
     }
 
     function potvrditStartApolohu() {
@@ -1354,9 +1351,9 @@
     }
 
     function odhlasit() { 
-        localStorage.removeItem('taxi_user'); 
-        localStorage.removeItem('taxi_pass'); 
-        location.reload(); 
+        auth.signOut().then(() => {
+            location.reload(); 
+        });
     }
     
     function vstoupitAdmin() { 
