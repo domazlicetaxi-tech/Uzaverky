@@ -1057,7 +1057,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script> <!-- TENTO ŘÁDEK PŘIDÁN -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
@@ -1074,9 +1074,10 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // SEKUNDÁRNÍ APLIKACE PRO VYTVÁŘENÍ UŽIVATELŮ BEZ ODHLÁŠENÍ ADMINA
+    const secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
+
     // BEZPEČNOSTNÍ FUNKCE PRO OVĚŘENÍ HESLA
-    // Heslo je zde chráněno přes matematický posun znaků (ASCII), 
-    // takže "26 3654" v kódu vůbec neexistuje!
     function overitHesloAdmina(zadaneHeslo) {
         if (!zadaneHeslo) return false;
         const tajnyKlic = [52, 56, 34, 53, 56, 55, 54]; // Maskované hodnoty
@@ -1093,7 +1094,6 @@
     let SERVIS_HESLO = "servis123"; 
     let jeServisak = false; 
 
-    // Vymazán admin a jeho plain-text heslo
     let ridici = {};
     let databaze = [];
     let logyDatabaze = [];
@@ -1141,7 +1141,6 @@
     }
 
     window.onload = () => {
-        // NOVÁ KONTROLA PŘIHLÁŠENÍ PŘES FIREBASE
         auth.onAuthStateChanged((user) => {
             if (user) {
                 prihlasenyUzivatel = user.email.split('@')[0];
@@ -1164,30 +1163,24 @@
         });
         
         db.collection("nastaveni").doc("ridici").onSnapshot((doc) => {
-    if (doc.exists) {
-        ridici = doc.data();
-    } else {
-        console.error("Dokument s řidiči nebyl nalezen!");
-        // Zde už nebudeme spouštět .set(), aby se prázdný objekt nepřepsal do ostré databáze
-    }
-    nactiAdokresliRidice();
-    // ...
-
-            
+            if (doc.exists) {
+                ridici = doc.data();
+            } else {
+                console.error("Dokument s řidiči nebyl nalezen!");
+            }
+            nactiAdokresliRidice();
         });
 
         db.collection("nastaveni").doc("auta").onSnapshot((doc) => {
-    if (doc.exists) {
-        auta = doc.data().seznam;
-    } else {
-        console.error("Dokument s auty ve Firebase nebyl nalezen!");
-        // Zde nespouštíme .set(), aby se data nepřepsala. 
-        // Aplikace spadne do chyby, ale nepřemaže ti ostrou databázi.
-        auta = []; 
-    }
-}, (error) => {
-    console.error("Chyba při čtení z Firebase (možná špatná doména/práva):", error);
-});
+            if (doc.exists) {
+                auta = doc.data().seznam;
+            } else {
+                console.error("Dokument s auty ve Firebase nebyl nalezen!");
+                auta = []; 
+            }
+        }, (error) => {
+            console.error("Chyba při čtení z Firebase (možná špatná doména/práva):", error);
+        });
 
         db.collection("nastaveni").doc("konfigurace").onSnapshot((doc) => {
             if (doc.exists) {
@@ -1416,11 +1409,24 @@
         const u = document.getElementById('regUser').value.trim();
         const p = document.getElementById('regPass').value;
         if(u && p) { 
-            ridici[u] = p; 
-            db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
-                alert(`Řidič "${u}" byl úspěšně vytvořen.`);
-                prepnout('sec-login'); 
-            });
+            const email = u.toLowerCase() + "@greentaxi.cz";
+            
+            // Vytvoření uživatele ve Firebase Auth přes sekundární instanci
+            secondaryApp.auth().createUserWithEmailAndPassword(email, p)
+                .then(() => {
+                    // Odhlásíme sekundární instanci, abychom nenarušili případnou další práci
+                    secondaryApp.auth().signOut();
+                    
+                    // Uložení jména a hesla do Firestore pro zobrazení v tabulce adminovi
+                    ridici[u] = p; 
+                    db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
+                        alert(`Řidič "${u}" byl úspěšně vytvořen (i pro přihlášení).`);
+                        prepnout('sec-login'); 
+                    });
+                })
+                .catch((error) => {
+                    alert("Chyba při registraci do Firebase Auth: " + error.message);
+                });
         } else alert("Musíte vyplnit jméno i heslo!");
     }
 
@@ -1562,7 +1568,6 @@
     function finalniPodpisOdeslani(btnElement) {
         const pass = document.getElementById('signPass').value;
         
-        // Zde si přidáme možnost, že odeslat uzávěrku může i administrátor svým heslem
         if ((ridici[prihlasenyUzivatel] === pass) || (prihlasenyUzivatel === "admin" && overitHesloAdmina(pass))) {
             
             const ulozDoDatabaze = () => {
@@ -2277,26 +2282,36 @@
     }
 
    function adminPridatRidice() {
-    const u = document.getElementById('adminNewUser').value.trim();
-    const p = document.getElementById('adminNewPass').value.trim();
-    if(u && p) {
-        ridici[u] = p;
-        
-        // OPRAVA: Okamžité uložení do databáze Firebase
-        db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
-            document.getElementById('adminNewUser').value = "";
-            document.getElementById('adminNewPass').value = "";
-            nactiAdokresliRidice();
-            alert(`Řidič "${u}" byl úspěšně přidán do databáze.`);
-        }).catch((err) => {
-            alert("Chyba při ukládání do databáze: " + err);
-        });
-        
-    } else alert("Vyplňte jméno i heslo!");
-}
+        const u = document.getElementById('adminNewUser').value.trim();
+        const p = document.getElementById('adminNewPass').value.trim();
+        if(u && p) {
+            const email = u.toLowerCase() + "@greentaxi.cz";
+            
+            // Vytvoření uživatele ve Firebase Auth přes sekundární instanci
+            secondaryApp.auth().createUserWithEmailAndPassword(email, p)
+                .then(() => {
+                    // Odhlásíme sekundární instanci
+                    secondaryApp.auth().signOut();
+                    
+                    // Uložení jména a hesla do Firestore (pro administraci)
+                    ridici[u] = p;
+                    db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
+                        document.getElementById('adminNewUser').value = "";
+                        document.getElementById('adminNewPass').value = "";
+                        nactiAdokresliRidice();
+                        alert(`Řidič "${u}" byl úspěšně přidán do databáze i do Firebase Auth.`);
+                    }).catch((err) => {
+                        alert("Chyba při ukládání do databáze: " + err);
+                    });
+                })
+                .catch((error) => {
+                    alert("Chyba při vytváření účtu ve Firebase Auth: " + error.message);
+                });
+        } else alert("Vyplňte jméno i heslo!");
+    }
 
     function adminSmazatRidice(r) {
-        if(confirm(`Smazat řidiče "${r}"?`)) {
+        if(confirm(`Smazat řidiče "${r}"? \n\nPoznámka: Tímto se smaže záznam z tabulky. Jeho přihlašovací účet ve Firebase Authentication však zůstane aktivní, pro úplné smazání je potřeba zásah přes Firebase konzoli nebo speciální backend skript.`)) {
             delete ridici[r];
             nactiAdokresliRidice();
         }
@@ -2310,7 +2325,7 @@
         });
 
         db.collection("nastaveni").doc("ridici").set(ridici).then(() => {
-            alert("Změny řidičů úspěšně uloženy.");
+            alert("Změny řidičů úspěšně uloženy. \n\nUpozornění: Případná změna hesla u existujícího řidiče zde v tabulce se NEPROPÍŠE do jeho skutečného přihlášení (to lze změnit pouze z účtu řidiče nebo z konzole).");
             prepnout('sec-database');
         });
     }
@@ -3095,19 +3110,16 @@
         });
     }
 function kopirovatAotevritVin(event) {
-    // 1. Najdeme pole s VIN a získáme jeho hodnotu bez mezer na začátku a na konci
     const vinInput = document.getElementById('cardVin');
     const vin = vinInput.value.trim();
 
-    // 2. Kontrola, zda pole není prázdné
     if (!vin) {
         alert("Nejprve zadejte nebo uložte VIN kód.");
         vinInput.focus();
-        if (event) event.preventDefault(); // Zastaví odkaz, pokud pole zůstalo prázdné
+        if (event) event.preventDefault(); 
         return false; 
     }
 
-    // 3. Okamžité zkopírování do schránky (bez jakéhokoliv čekání, aby to telefon nezablokoval)
     if (navigator.clipboard) {
         navigator.clipboard.writeText(vin);
     } else {
@@ -3115,12 +3127,9 @@ function kopirovatAotevritVin(event) {
         document.execCommand('copy');
     }
 
-    // 4. Povolíme prohlížeči, aby hned otevřel odkaz
     return true;
 }
-// ==========================================
-    // FUNKCE PRO KONTROLU POJIŠTĚNÍ (UKLIZENÁ)
-    // ==========================================
+
     function kopirovatAotevritRz(event) {
         const auto = auta.find(a => a.id === aktivniKartaAutoId);
         let text = auto ? auto.spz : "";
